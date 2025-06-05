@@ -1,0 +1,194 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+
+@inject IAuthService AuthService
+@inject ISnackbar SnackBar
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+
+@page "/settings/account"
+
+@attribute [Authorize]
+
+@layout SettingsLayout
+
+<PageTitle>Settings</PageTitle>
+
+<MudContainer Class="pt-4">
+    <div class="d-flex align-center gap-2 mb-2">
+        <MudIconButton Icon="@Icons.Material.Rounded.ArrowBack" aria-label="Regresar" Size="Size.Small" />
+        <MudText Typo="Typo.h5">Mi perfil</MudText>
+    </div>
+
+    <MudDivider />
+
+    <!-- Avatar y botones de imagen -->
+    <div class="d-flex flex-row justify-items-center my-4">
+        <MudAvatar Size="Size.Large" Style="height:100px; width:100px; margin-right:16px;">
+            <MudImage Src="https://picsum.photos/200" Alt="Perfil" />
+        </MudAvatar>
+
+        <MudStack Spacing="2" Justify="Justify.Center">
+            <MudStack Row Spacing="2" Wrap="Wrap.Wrap">
+                <MudButton Variant="Variant.Filled" Color="Color.Dark">Subir imagen</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Dark">Remover imagen</MudButton>
+            </MudStack>
+
+            <MudText Typo="Typo.caption">
+                Soporta imágenes PNG, JPEG hasta 2 MB
+            </MudText>
+        </MudStack>
+    </div>
+
+    <!-- Formulario de edición -->
+    <EditForm Model="@AccountModel" OnValidSubmit="@SaveChanges">
+        <DataAnnotationsValidator/>
+
+        <MudGrid Spacing="3">
+            <MudItem xs="12">
+                <MudTextField @bind-Value="AccountModel.Username"
+                              Disabled="!_isEditing"
+                              Label="Nombre de usuario"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Rounded.Person"
+                              Variant="Variant.Outlined"
+                              For="@(() => AccountModel.Username)" />
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="AccountModel.Email"
+                              Disabled="!_isEditing"
+                              Label="Correo electrónico"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Rounded.Email"
+                              Variant="Variant.Outlined" 
+                              For="@(() => AccountModel.Email)"/>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="AccountModel.Password"
+                              Disabled="!_isEditing"
+                              Label="Contraseña"
+                              InputType="@(_showPassword ? InputType.Text : InputType.Password)"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@(_showPassword ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                              OnAdornmentClick="@TogglePasswordVisibility"
+                              HelperText="Mínimo 8 caracteres"
+                              For="@(() => AccountModel.Password)" />
+            </MudItem>
+
+            <MudItem>
+                <MudStack Row Spacing="2">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Dark"
+                               OnClick="ToggleEditing">
+                        @(_isEditing ? "Guardar" : "Editar perfil")
+                    </MudButton>
+
+                    @if (_isEditing)
+                    {
+                        <MudButton Variant="Variant.Outlined"
+                        Color="Color.Dark"
+                        OnClick="@CancelEdition">Cancelar</MudButton>
+                    }
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+    </EditForm>
+
+    <MudText Typo="Typo.h5" Class="mt-6 mb-2">Acceso</MudText>
+    <MudDivider />
+
+    <MudStack>
+        <div class="d-flex justify-space-between align-center my-4">
+            <div>
+                <MudText>Cerrar sesión</MudText>
+                <MudText Typo="Typo.caption">
+                    Al cerrar la sesión deberás ingresar tu correo y contraseña para poder acceder nuevamente
+                </MudText>
+            </div>
+            <MudButton Variant="Variant.Outlined"
+            Color="Color.Dark"
+            StartIcon="@Icons.Material.Rounded.Logout"
+            Style="width: 200px"
+            OnClick="@LogOut">Cerrar sesión</MudButton>
+        </div>
+
+        <div class="d-flex justify-space-between align-center">
+            <div>
+                <MudText Color="Color.Error">Eliminar cuenta</MudText>
+                <MudText Typo="Typo.caption">Esta acción no se puede deshacer</MudText>
+            </div>
+            <MudButton Variant="Variant.Filled"
+            Color="Color.Error"
+            StartIcon="@Icons.Material.Rounded.DeleteOutline"
+            Style="width: 200px"
+            OnClick="@DeleteAccount">Eliminar cuenta</MudButton>
+        </div>
+    </MudStack>
+</MudContainer>
+
+@code {
+    private bool _showPassword = false;
+    private bool _isEditing = false;
+
+    private UserAccountModel AccountModel { get; set; } = new()
+        {
+            Username = "Nombre de usuario",
+            Email = "ejemplo@gmail.com",
+            Password = "contraseñaEjemplo"
+        };
+    private UserAccountModel OriginalModel = new();
+
+    private void ToggleEditing()
+    {
+        if (_isEditing)
+        {
+            SaveChanges();
+        }
+        else
+        {
+            // Clonar valores actuales antes de editar
+            OriginalModel = new UserAccountModel
+                {
+                    Username = AccountModel.Username,
+                    Email = AccountModel.Email,
+                    Password = AccountModel.Password
+                };
+        }
+
+        _isEditing = !_isEditing;
+    }
+
+    private void CancelEdition()
+    {
+        AccountModel.Username = OriginalModel.Username;
+        AccountModel.Email = OriginalModel.Email;
+        AccountModel.Password = OriginalModel.Password;
+        _isEditing = false;
+    }
+
+    private void SaveChanges()
+    {
+        SnackBar.Add("Tu información se actualizó correctamente.", Severity.Success);
+    }
+
+    private void TogglePasswordVisibility()
+    {
+        _showPassword = !_showPassword;
+    }
+
+    private async void LogOut()
+    {
+        await AuthService.LogoutAsync();
+        SnackBar.Add("¡Hasta luego! Te esperamos pronto.", Severity.Info);
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void DeleteAccount()
+    {
+        SnackBar.Add("¡Tu cuenta fue eliminada. Esperamos verte de nuevo algún día.", Severity.Normal);
+        NavigationManager.NavigateTo("/");
+    }
+}

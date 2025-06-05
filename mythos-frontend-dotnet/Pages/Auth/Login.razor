@@ -1,0 +1,139 @@
+@using System.ComponentModel.DataAnnotations
+
+@inject NavigationManager NavigationManager
+@inject IAuthService AuthService
+@inject ISnackbar SnackBar
+
+@layout EmptyLayout
+
+@page "/login"
+
+<PageTitle>Inicio de sesión</PageTitle>
+
+<div class="login-container">
+
+    <!-- Header/Logo -->
+    <div class="brand-container">
+        <BrandContainer />
+    </div>
+
+    <!-- Main Content -->
+    <MudGrid class="login-grid ma-0 pa-0" Justify="Justify.Center">
+        <!-- Form Column -->
+        <MudItem xs="12" md="6" Class="d-flex flex-column justify-center pa-2 pa-md-4">
+            <MudPaper Elevation="3" Class="login-form-container mx-auto pa-6 pa-sm-8">
+                <MudText Typo="Typo.h5" Style="font-weight: 700;" Align="Align.Center" Class="mb-1">
+                    Inicia Sesión con tu cuenta
+                </MudText>
+                <MudText Typo="Typo.subtitle1" Align="Align.Center" Class="mb-6">
+                    Ingresa tu correo electrónico y contraseña
+                </MudText>
+
+                <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                    <DataAnnotationsValidator />
+
+                    <MudTextField 
+                        @bind-Value="loginModel.Email" 
+                        Label="Correo electrónico"
+                        For="@(() => loginModel.Email)" 
+                        Required="true" 
+                        Class="mb-4" 
+                        Variant="Variant.Outlined"
+                        Adornment="Adornment.End" 
+                        AdornmentIcon="@Icons.Material.Filled.Email" />
+
+                    <MudTextField 
+                        @bind-Value="loginModel.Password" 
+                        Label="Contraseña"
+                        For="@(() => loginModel.Password)" 
+                        InputType="@_passwordInputType" 
+                        Required="true" 
+                        Class="mb-2"
+                        FullWidth="true" 
+                        Variant="Variant.Outlined" 
+                        Adornment="Adornment.End"
+                        AdornmentIcon="@_passwordVisibilityIcon" 
+                        AdornmentColor="Color.Primary" 
+                        Immediate="true"
+                        OnAdornmentClick="TogglePasswordVisibility">
+                    </MudTextField>
+
+                    <MudLink Href="/forgot-password" Class="d-block mb-6 ml-auto" Style="width: fit-content;">
+                        ¿Olvidaste tu contraseña?
+                    </MudLink>
+
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Dark"
+                        FullWidth="true" Size="Size.Large" Disabled="@_isProcessing" Class="py-3">
+                        @if (_isProcessing)
+                        {
+                            <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                            <span>Procesando...</span>
+                        }
+                        else
+                        {
+                            <span>Iniciar sesión</span>
+                        }
+                    </MudButton>
+                </EditForm>
+
+                <div class="mt-6">
+                    <MudText Typo="Typo.body1" Align="Align.Center">
+                        ¿No tienes cuenta?
+                        <MudLink Href="/register" Underline="Underline.Always">Regístrate</MudLink>
+                    </MudText>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Image Column -->
+        <MudItem xs="12" md="6" Class="d-none d-md-flex pa-0">
+            <MudImage Class="login-image" ObjectFit="ObjectFit.Cover" Src="Images/Login-image.svg" Alt="Imagen de login"
+                Style="max-height: 100dvh;" ObjectPosition="ObjectPosition.Left" Elevation="10" />
+        </MudItem>
+    </MudGrid>
+</div>
+
+@code {
+    private LoginModel loginModel = new();
+    private bool _isProcessing = false;
+    private bool _passwordVisible = false;
+    private InputType _passwordInputType = InputType.Password;
+    private string _passwordVisibilityIcon = Icons.Material.Filled.VisibilityOff;
+
+    private void TogglePasswordVisibility()
+    {
+        _passwordVisible = !_passwordVisible;
+        _passwordInputType = _passwordVisible ? InputType.Text : InputType.Password;
+        _passwordVisibilityIcon = _passwordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff;
+    }
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            _isProcessing = true;
+
+            var result = await AuthService.LoginAsync(loginModel);
+            SnackBar.Configuration.PreventDuplicates = false;
+
+            if (result)
+            {
+                SnackBar.Add("Inicio de sesión exitoso", Severity.Success);
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                SnackBar.Add("Credenciales inválidas", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al iniciar sesión: {ex.Message}");
+            SnackBar.Add("Lo sentimos, ocurrio un error con el servidor, por favor intentelo más tarde", Severity.Error);
+        }
+        finally
+        {
+            _isProcessing = false;
+        }
+    }
+}

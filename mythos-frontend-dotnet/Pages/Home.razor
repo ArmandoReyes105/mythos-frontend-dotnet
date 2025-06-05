@@ -1,0 +1,35 @@
+﻿@inject NavigationManager NavigationManager
+@inject IAuthService AuthService
+
+@page "/"
+
+<PageTitle>Home</PageTitle>
+
+<h1>Hello, world!</h1>
+ 
+Welcome to your new app.
+<hr />
+
+<AuthorizeView>
+	<NotAuthorized>
+		<MudButton Variant="Variant.Filled" OnClick="GoToLogin">Iniciar sesión</MudButton>
+	</NotAuthorized>
+	<Authorized>
+		<MudButton Variant="Variant.Filled" OnClick="CerrarSesion2">Cerrar sesión</MudButton>
+	</Authorized>
+</AuthorizeView>
+
+
+
+@code {
+	public void GoToLogin()
+	{
+		NavigationManager.NavigateTo("login");
+	}
+
+	public async void CerrarSesion2()
+	{
+		await AuthService.LogoutAsync();
+		NavigationManager.NavigateTo("/");
+	}
+}

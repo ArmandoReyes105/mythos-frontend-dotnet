@@ -1,0 +1,36 @@
+﻿@inject NavigationManager NavigationManager
+
+@inherits LayoutComponentBase
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <AppBar />
+
+    <MudMainContent>
+        <MudDrawerContainer >
+            <MudDrawer Style="height: calc(100vh - 64px);" Open="true" ClipMode="DrawerClipMode.Docked" Breakpoint="Breakpoint.Md" Elevation="1" Variant="@DrawerVariant.Mini">
+                <MudNavMenu Class="mt-5" Color="Color.Dark">
+                    <MudText Typo="Typo.subtitle1" Class="mb-2 font-weight-bold d-none d-md-block pl-4">AJUSTES GENERALES</MudText>
+                    <MudNavLink Href="/settings/account" Icon="@Icons.Material.Filled.Person">Mi cuenta</MudNavLink>
+
+                    <AuthorizeView Roles="Writer">
+                        <Authorized>
+                            <MudDivider Class="mt-5" />
+
+                            <MudText Typo="Typo.subtitle1" Class="mt-4 mb-2 font-weight-bold d-none d-md-block pl-4">AJUSTES ESCRITOR</MudText>
+                            <MudNavLink Href="/publicaciones" Icon="@Icons.Material.Filled.Book">Publicaciones</MudNavLink>
+                        </Authorized>
+                    </AuthorizeView>
+                </MudNavMenu>
+            </MudDrawer>
+
+            <div>
+                @Body
+            </div>
+        </MudDrawerContainer>
+    </MudMainContent>
+</MudLayout>

@@ -1,0 +1,41 @@
+﻿@inject NavigationManager NavigationManager
+@inject IAuthService AuthService
+
+<MudAppBar style="Background-color: white;" Fixed="true">
+	<BrandContainer />
+
+	<MudButton Variant="Variant.Text" Class="ml-4">Explora nuevas historias</MudButton>
+	<MudButton Variant="Variant.Text">Conviértete en autor</MudButton>
+    <MudSpacer />
+
+	<AuthorizeView>
+		<NotAuthorized>
+			<MudButton Variant="Variant.Filled" Color="Color.Dark" OnClick="GoToLogin">Iniciar sesión</MudButton>
+		</NotAuthorized>
+		<Authorized>
+			<div class="d-flex gap-1 align-center">
+				<MudLink Href="/settings/account">
+					<MudIconButton Icon="@Icons.Material.Filled.Settings" aria-label="Configuración" />
+				</MudLink>
+				
+				<MudAvatar>
+					<MudImage Src="https://picsum.photos/200"></MudImage>
+				</MudAvatar>
+			</div>
+		</Authorized>
+	</AuthorizeView>
+
+</MudAppBar>
+
+@code {
+	public void GoToLogin()
+	{
+		NavigationManager.NavigateTo("login");
+	}
+
+	public async void CerrarSesion()
+	{
+		await AuthService.LogoutAsync();
+		NavigationManager.NavigateTo("/");
+	}
+}
