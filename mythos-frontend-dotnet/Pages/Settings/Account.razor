@@ -1,10 +1,9 @@
-﻿@using System.ComponentModel.DataAnnotations
-@using System.Security.Claims
+﻿@using mythos_frontend_dotnet.Pages.Settings.Components
 
 @inject IAuthService AuthService
+@inject IAccountService AccountService
 @inject ISnackbar SnackBar
 @inject NavigationManager NavigationManager
-@inject AuthenticationStateProvider AuthStateProvider
 
 @page "/settings/account"
 
@@ -45,7 +44,7 @@
         <DataAnnotationsValidator/>
 
         <MudGrid Spacing="3">
-            <MudItem xs="12">
+            <MudItem xs="12" md="6">
                 <MudTextField @bind-Value="AccountModel.Username"
                               Disabled="!_isEditing"
                               Label="Nombre de usuario"
@@ -63,19 +62,6 @@
                               AdornmentIcon="@Icons.Material.Rounded.Email"
                               Variant="Variant.Outlined" 
                               For="@(() => AccountModel.Email)"/>
-            </MudItem>
-
-            <MudItem xs="12" md="6">
-                <MudTextField @bind-Value="AccountModel.Password"
-                              Disabled="!_isEditing"
-                              Label="Contraseña"
-                              InputType="@(_showPassword ? InputType.Text : InputType.Password)"
-                              Variant="Variant.Outlined"
-                              Adornment="Adornment.End"
-                              AdornmentIcon="@(_showPassword ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
-                              OnAdornmentClick="@TogglePasswordVisibility"
-                              HelperText="Mínimo 8 caracteres"
-                              For="@(() => AccountModel.Password)" />
             </MudItem>
 
             <MudItem>
@@ -96,6 +82,11 @@
             </MudItem>
         </MudGrid>
     </EditForm>
+
+    <MudText Typo="Typo.h5" Class="mt-6 mb-2">Seguridad</MudText>
+    <MudDivider Class="mb-4"/>
+
+    <ChangePasswordForm />
 
     <MudText Typo="Typo.h5" Class="mt-6 mb-2">Acceso</MudText>
     <MudDivider />
@@ -141,11 +132,35 @@
         };
     private UserAccountModel OriginalModel = new();
 
-    private void ToggleEditing()
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var account = await AccountService.GetUserAccountAsync();
+
+            if (account is null)
+            {
+                SnackBar.Add("Error al cargar el perfil del usuario, por favor intentelo más tarde", Severity.Error);
+                NavigationManager.NavigateTo("/");
+            } 
+            else
+            {
+                AccountModel = account;    
+            }
+        }
+        catch (Exception ex)
+        {
+            SnackBar.Add("Error al cargar el perfil del usuario", Severity.Error);
+            Console.Error.WriteLine(ex.Message);
+        }
+
+    }
+
+    private async void ToggleEditing()
     {
         if (_isEditing)
         {
-            SaveChanges();
+            await SaveChanges();
         }
         else
         {
@@ -169,9 +184,27 @@
         _isEditing = false;
     }
 
-    private void SaveChanges()
+    private async Task SaveChanges()
     {
-        SnackBar.Add("Tu información se actualizó correctamente.", Severity.Success);
+        try
+        {
+            var isUpdateSuccess = await AccountService.UpdateAccountAsync(AccountModel); 
+
+            if (isUpdateSuccess)
+            {
+                SnackBar.Add("Tu información se actualizó correctamente.", Severity.Success);
+            }
+            else
+            {
+                SnackBar.Add("Lo sentimos, ocurrio un error al intentar actualizar tu información, por favor intentalo más tarde");
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Console.Error.Write(ex.Message);
+        }
+        
     }
 
     private void TogglePasswordVisibility()
