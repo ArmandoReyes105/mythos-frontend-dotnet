@@ -1,33 +1,31 @@
 ﻿
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Components.WebAssembly.Http;
 using Microsoft.JSInterop;
 using mythos_frontend_dotnet.Models;
 
 namespace mythos_frontend_dotnet.Services
 {
     public class AuthService(
-        HttpClient httpClient, 
+        HttpClient httpClient,
         IJSRuntime js,
         MythosAuthStateProvider authProvider) : IAuthService
     {
         public async Task<bool> LoginAsync(LoginModel loginModel)
         {
-            var request = new
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, "auth/login")
             {
-                Username = loginModel.Email,
-                loginModel.Password
+                Content = JsonContent.Create(loginModel)
             };
 
-            var response = await httpClient.PostAsJsonAsync("auth/login", request);
+            requestMessage.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+
+            var response = await httpClient.SendAsync(requestMessage);
 
             if (!response.IsSuccessStatusCode)
                 return false;
 
-            var tokens = await response.Content.ReadFromJsonAsync<TokenResponse>();
-            await js.InvokeVoidAsync("localStorage.setItem", "access_token", tokens!.AccessToken);
-            await js.InvokeVoidAsync("localStorage.setItem", "refresh_token", tokens.RefreshToken);
             authProvider.NotifyAuthenticationStateChanged();
-
             return true;
         }
 

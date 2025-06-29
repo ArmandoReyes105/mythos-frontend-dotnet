@@ -1,20 +1,39 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.JSInterop;
+using mythos_frontend_dotnet.Models;
+using System.Net.Http.Json;
 using System.Security.Claims;
 
 namespace mythos_frontend_dotnet.Services
 {
-    public class MythosAuthStateProvider(IJSRuntime js, JwtParser parser) : AuthenticationStateProvider
+    public class MythosAuthStateProvider(HttpClient httpClient) : AuthenticationStateProvider
     {
+        private readonly ClaimsPrincipal anonymous = new(new ClaimsIdentity());
+
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            var token = await js.InvokeAsync<string>("localStorage.getItem", "access_token");
+            try
+            {
+                var response = await httpClient.GetAsync($"account/");
+                var user = await response.Content.ReadFromJsonAsync<CompleteAccountModel>();
 
-            if (string.IsNullOrEmpty(token))
-                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+                if (user is null) return new AuthenticationState(anonymous);
 
-            var principal = parser.ParseClaimsFromJwt(token);
-            return new AuthenticationState(principal);
+                var claims = new List<Claim>
+                {
+                    new(ClaimTypes.NameIdentifier, user.AccountId),
+                    new(ClaimTypes.Name, user.Username),
+                    new(ClaimTypes.Email, user.Email),
+                    new(ClaimTypes.Role, user.Role)
+                };
+
+                var identity = new ClaimsIdentity(claims, "Cookie");
+                return new AuthenticationState(new ClaimsPrincipal(identity));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting authentication state: {ex.Message}");
+                return new AuthenticationState(anonymous);
+            }
         }
 
         public void NotifyAuthenticationStateChanged()
