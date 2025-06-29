@@ -29,6 +29,13 @@ namespace mythos_frontend_dotnet.Services
             return true;
         }
 
+        public async Task<bool> RegisterAsync(UserAccountModel registerModel)
+        {
+            var response = await httpClient.PostAsJsonAsync("auth/register", registerModel);
+
+            return response.IsSuccessStatusCode;
+        }
+
         public async Task LogoutAsync()
         {
             await js.InvokeVoidAsync("localStorage.removeItem", "access_token");

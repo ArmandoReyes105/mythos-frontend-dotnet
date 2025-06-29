@@ -13,7 +13,7 @@ namespace mythos_frontend_dotnet.Models
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "La contraseña es requerida")]
-        [StringLength(100, MinimumLength = 8, ErrorMessage = "La contraseña debe tener al menos 8 caracteres")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres")]
         public string Password { get; set; } = string.Empty;
     }
 }

@@ -1,0 +1,126 @@
+@using System.ComponentModel.DataAnnotations
+
+@inject NavigationManager NavigationManager
+@inject IAuthService AuthService
+@inject ISnackbar SnackBar
+
+@layout EmptyLayout
+
+@page "/register"
+
+<PageTitle>Registrate</PageTitle>
+
+<RedirectIfAuthenticated />
+
+<div class="login-container">
+
+    <!-- Header/Logo -->
+    <div class="brand-container">
+        <BrandContainer />
+    </div>
+
+    <!-- Main Content -->
+    <MudGrid class="login-grid ma-0 pa-0" Justify="Justify.Center">
+        <!-- Form Column -->
+        <MudItem xs="12" md="6" Class="d-flex flex-column justify-center pa-2 pa-md-4">
+            <MudPaper Elevation="3" Class="login-form-container mx-auto pa-6 pa-sm-8">
+                <MudText Typo="Typo.h5" Style="font-weight: 700;" Align="Align.Center" Class="mb-1">
+                    Crea una cuenta en Mythos
+                </MudText>
+                <MudText Typo="Typo.subtitle1" Align="Align.Center" Class="mb-6">
+                    Completa los campos siguientes
+                </MudText>
+
+                <EditForm Model="@registerModel" OnValidSubmit="@HandleRegister">
+                    <DataAnnotationsValidator />
+
+                    <MudTextField @bind-Value="registerModel.Username" Label="Nombre de usuario"
+                        For="@(() => registerModel.Username)" Required="true" Class="mb-4" Variant="Variant.Outlined"
+                        Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Person" />
+
+                    <MudTextField @bind-Value="registerModel.Email" Label="Correo electrónico"
+                        For="@(() => registerModel.Email)" Required="true" Class="mb-4" Variant="Variant.Outlined"
+                        Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Mail" />
+
+                    <MudTextField @bind-Value="registerModel.Password" Label="Contraseña"
+                        For="@(() => registerModel.Password)" InputType="@_passwordInputType" Required="true"
+                        Class="mb-2" FullWidth="true" Variant="Variant.Outlined" Adornment="Adornment.End"
+                        AdornmentIcon="@_passwordVisibilityIcon" AdornmentColor="Color.Primary" Immediate="true"
+                        OnAdornmentClick="TogglePasswordVisibility">
+                    </MudTextField>
+
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Dark"
+                        FullWidth="true" Size="Size.Large" Disabled="@_isProcessing" Class="py-3">
+                        @if (_isProcessing)
+                        {
+                            <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                            <span>Procesando...</span>
+                        }
+                        else
+                        {
+                            <span>Registrarse</span>
+                        }
+                    </MudButton>
+                </EditForm>
+
+                <div class="mt-6">
+                    <MudText Typo="Typo.body1" Align="Align.Center">
+                        ¿Ya tienes una cuenta?
+                        <MudLink Href="/login" Underline="Underline.Always">Inicia sesión</MudLink>
+                    </MudText>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Image Column -->
+        <MudItem xs="12" md="6" Class="d-none d-md-flex pa-0">
+            <MudImage Class="login-image" ObjectFit="ObjectFit.Cover" Src="Images/Register-image.png "
+                Alt="Imagen de login" Style="max-height: 100dvh;" ObjectPosition="ObjectPosition.Left" Elevation="10" />
+        </MudItem>
+    </MudGrid>
+</div>
+
+@code {
+    private UserAccountModel registerModel = new();
+    private bool _isProcessing = false;
+    private bool _passwordVisible = false;
+    private InputType _passwordInputType = InputType.Password;
+    private string _passwordVisibilityIcon = Icons.Material.Filled.VisibilityOff;
+
+    private void TogglePasswordVisibility()
+    {
+        _passwordVisible = !_passwordVisible;
+        _passwordInputType = _passwordVisible ? InputType.Text : InputType.Password;
+        _passwordVisibilityIcon = _passwordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff;
+    }
+
+    private async Task HandleRegister()
+    {
+        try
+        {
+            _isProcessing = true;
+
+            var result = await AuthService.RegisterAsync(registerModel);
+            SnackBar.Configuration.PreventDuplicates = false;
+
+            if (result)
+            {
+                SnackBar.Add("Su cuenta fue registrada exitosamente.", Severity.Success);
+                NavigationManager.NavigateTo("/login");
+            }
+            else
+            {
+                SnackBar.Add("El nombre de usuario ya existe. Por favor intente con otro.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al registrar cuenta: {ex.Message}");
+            SnackBar.Add("Lo sentimos, ocurrio un error con el servidor, por favor intentelo más tarde", Severity.Error);
+        }
+        finally
+        {
+            _isProcessing = false;
+        }
+    }
+}
