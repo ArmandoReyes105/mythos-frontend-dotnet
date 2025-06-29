@@ -51,5 +51,12 @@ namespace mythos_frontend_dotnet.Services
 
             return user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         }
+
+        public Task MarkUserAsLoggedOut()
+        {
+            var anonAuthState = new AuthenticationState(anonymous);
+            NotifyAuthenticationStateChanged(Task.FromResult(anonAuthState));
+            return Task.CompletedTask;
+        }
     }
 }

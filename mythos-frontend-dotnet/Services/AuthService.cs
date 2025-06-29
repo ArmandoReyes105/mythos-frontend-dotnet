@@ -1,14 +1,12 @@
 ﻿
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
-using Microsoft.JSInterop;
 using mythos_frontend_dotnet.Models;
 
 namespace mythos_frontend_dotnet.Services
 {
     public class AuthService(
         HttpClient httpClient,
-        IJSRuntime js,
         MythosAuthStateProvider authProvider) : IAuthService
     {
         public async Task<bool> LoginAsync(LoginModel loginModel)
@@ -38,9 +36,16 @@ namespace mythos_frontend_dotnet.Services
 
         public async Task LogoutAsync()
         {
-            await js.InvokeVoidAsync("localStorage.removeItem", "access_token");
-            await js.InvokeVoidAsync("localStorage.removeItem", "refresh_token");
-            authProvider.NotifyAuthenticationStateChanged();
+            try
+            {
+                await httpClient.PostAsync("auth/logout", null);
+            }
+            catch
+            {
+                Console.WriteLine("Cerrando sesión localmente");
+            }
+
+            await authProvider.MarkUserAsLoggedOut();
         }
     }
 }

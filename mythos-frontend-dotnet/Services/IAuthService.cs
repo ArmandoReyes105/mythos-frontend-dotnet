@@ -6,7 +6,6 @@ namespace mythos_frontend_dotnet.Services
     {
         Task<bool> LoginAsync(LoginModel loginModel);
         Task<bool> RegisterAsync(UserAccountModel registerModel);
-
         Task LogoutAsync();
     }
 }
