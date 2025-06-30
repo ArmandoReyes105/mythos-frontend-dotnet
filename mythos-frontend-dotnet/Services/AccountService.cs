@@ -39,5 +39,11 @@ namespace mythos_frontend_dotnet.Services
 
             return response.IsSuccessStatusCode;
         }
+
+        public async Task<bool> BecomeWriterAsync(PersonModel model)
+        {
+            var response = await httpClient.PostAsJsonAsync("account/become-writer", model);
+            return response.IsSuccessStatusCode;
+        }
     }
 }
