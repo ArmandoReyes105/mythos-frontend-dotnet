@@ -5,8 +5,24 @@
 	<BrandContainer />
 
 	<MudButton Variant="Variant.Text" Class="ml-4">Explora nuevas historias</MudButton>
-	<MudButton Variant="Variant.Text">Conviértete en autor</MudButton>
-    <MudSpacer />
+
+	<AuthorizeView Roles="reader">
+		<Authorized>
+			<MudButton Variant="Variant.Text" OnClick="@(() => NavigationManager.NavigateTo("/become-writer"))">
+				Conviértete en autor
+			</MudButton>
+		</Authorized>
+	</AuthorizeView>
+
+	<AuthorizeView Roles="writer">
+		<Authorized>
+			<MudButton Variant="Variant.Text">
+				Publicar novela
+			</MudButton>
+		</Authorized>
+	</AuthorizeView>
+
+	<MudSpacer />
 
 	<AuthorizeView>
 		<NotAuthorized>
@@ -17,7 +33,7 @@
 				<MudLink Href="/settings/account">
 					<MudIconButton Icon="@Icons.Material.Filled.Settings" aria-label="Configuración" />
 				</MudLink>
-				
+
 				<MudAvatar>
 					<MudImage Src="https://picsum.photos/200"></MudImage>
 				</MudAvatar>

@@ -1,20 +1,13 @@
-﻿using Microsoft.JSInterop;
-using System.Net.Http.Headers; 
+﻿using Microsoft.AspNetCore.Components.WebAssembly.Http;
+using Microsoft.JSInterop;
 
 namespace mythos_frontend_dotnet.Services
 {
-    public class AuthMessageHandler(IJSRuntime js) : DelegatingHandler
+    public class AuthMessageHandler : DelegatingHandler
     {
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-
-            var token = await js.InvokeAsync<string>("localStorage.getItem", "access_token");
-
-            if (!string.IsNullOrEmpty(token))
-            {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-
+            request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
             return await base.SendAsync(request, cancellationToken);
         }
     }

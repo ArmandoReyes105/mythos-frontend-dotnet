@@ -1,0 +1,10 @@
+@inject IJSRuntime JS
+
+<MudIconButton Icon="@Icons.Material.Rounded.ArrowBack" aria-label="Regresar" onclick="@GoBack" />
+
+@code {
+    private async Task GoBack()
+    {
+        await JS.InvokeVoidAsync("eval", "history.back()");
+    }
+}

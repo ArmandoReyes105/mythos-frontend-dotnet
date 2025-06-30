@@ -10,6 +10,8 @@
 
 <PageTitle>Inicio de sesión</PageTitle>
 
+<RedirectIfAuthenticated />
+
 <div class="login-container">
 
     <!-- Header/Logo -->
@@ -32,29 +34,14 @@
                 <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
                     <DataAnnotationsValidator />
 
-                    <MudTextField 
-                        @bind-Value="loginModel.Email" 
-                        Label="Correo electrónico"
-                        For="@(() => loginModel.Email)" 
-                        Required="true" 
-                        Class="mb-4" 
-                        Variant="Variant.Outlined"
-                        Adornment="Adornment.End" 
-                        AdornmentIcon="@Icons.Material.Filled.Email" />
+                    <MudTextField @bind-Value="loginModel.Username" Label="Nombre de usuario"
+                        For="@(() => loginModel.Username)" Required="true" Class="mb-4" Variant="Variant.Outlined"
+                        Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Person" />
 
-                    <MudTextField 
-                        @bind-Value="loginModel.Password" 
-                        Label="Contraseña"
-                        For="@(() => loginModel.Password)" 
-                        InputType="@_passwordInputType" 
-                        Required="true" 
-                        Class="mb-2"
-                        FullWidth="true" 
-                        Variant="Variant.Outlined" 
-                        Adornment="Adornment.End"
-                        AdornmentIcon="@_passwordVisibilityIcon" 
-                        AdornmentColor="Color.Primary" 
-                        Immediate="true"
+                    <MudTextField @bind-Value="loginModel.Password" Label="Contraseña"
+                        For="@(() => loginModel.Password)" InputType="@_passwordInputType" Required="true" Class="mb-2"
+                        FullWidth="true" Variant="Variant.Outlined" Adornment="Adornment.End"
+                        AdornmentIcon="@_passwordVisibilityIcon" AdornmentColor="Color.Primary" Immediate="true"
                         OnAdornmentClick="TogglePasswordVisibility">
                     </MudTextField>
 

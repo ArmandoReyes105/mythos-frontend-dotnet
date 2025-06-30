@@ -1,41 +1,51 @@
 ﻿
 using System.Net.Http.Json;
-using Microsoft.JSInterop;
+using Microsoft.AspNetCore.Components.WebAssembly.Http;
 using mythos_frontend_dotnet.Models;
 
 namespace mythos_frontend_dotnet.Services
 {
     public class AuthService(
-        HttpClient httpClient, 
-        IJSRuntime js,
+        HttpClient httpClient,
         MythosAuthStateProvider authProvider) : IAuthService
     {
         public async Task<bool> LoginAsync(LoginModel loginModel)
         {
-            var request = new
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, "auth/login")
             {
-                Username = loginModel.Email,
-                loginModel.Password
+                Content = JsonContent.Create(loginModel)
             };
 
-            var response = await httpClient.PostAsJsonAsync("auth/login", request);
+            requestMessage.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+
+            var response = await httpClient.SendAsync(requestMessage);
 
             if (!response.IsSuccessStatusCode)
                 return false;
 
-            var tokens = await response.Content.ReadFromJsonAsync<TokenResponse>();
-            await js.InvokeVoidAsync("localStorage.setItem", "access_token", tokens!.AccessToken);
-            await js.InvokeVoidAsync("localStorage.setItem", "refresh_token", tokens.RefreshToken);
             authProvider.NotifyAuthenticationStateChanged();
-
             return true;
+        }
+
+        public async Task<bool> RegisterAsync(UserAccountModel registerModel)
+        {
+            var response = await httpClient.PostAsJsonAsync("auth/register", registerModel);
+
+            return response.IsSuccessStatusCode;
         }
 
         public async Task LogoutAsync()
         {
-            await js.InvokeVoidAsync("localStorage.removeItem", "access_token");
-            await js.InvokeVoidAsync("localStorage.removeItem", "refresh_token");
-            authProvider.NotifyAuthenticationStateChanged();
+            try
+            {
+                await httpClient.PostAsync("auth/logout", null);
+            }
+            catch
+            {
+                Console.WriteLine("Cerrando sesión localmente");
+            }
+
+            await authProvider.MarkUserAsLoggedOut();
         }
     }
 }

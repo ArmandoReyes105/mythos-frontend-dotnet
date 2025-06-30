@@ -1,0 +1,143 @@
+@using System.Security.Claims
+
+@inject IAccountService AccountService
+@inject MythosAuthStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject ISnackbar SnackBar
+
+@attribute [Authorize]
+
+@page "/become-writer"
+
+<PageTitle>Become Writer</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="pa-4">
+    <IconBackButton />
+
+    <MudContainer MaxWidth="MaxWidth.Small">
+        <MudStack>
+            <MudText Typo="Typo.h4">Conviértete en escritor</MudText>
+            <MudText Typo="Typo.body2">Comparte tu voz con el mundo. Completa tu perfil de escritor y empieza a
+                publicar
+                tus
+                historias en Mythos</MudText>
+        </MudStack>
+
+        <MudDivider Class="mt-3 mb-3" />
+
+        <EditForm Model="@personModel" OnValidSubmit="@HandleSubmit">
+            <DataAnnotationsValidator />
+
+            <MudGrid Spacing="3">
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="personModel.Name" Label="Nombre" Required="true"
+                        For="@(() => personModel.Name)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="personModel.LastName" Label="Apellidos" Required="true"
+                        For="@(() => personModel.LastName)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker @bind-Date="personModel.BirthDate" Label="Fecha de nacimiento" Required="true"
+                        For="@(() => personModel.BirthDate)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                        Elevation="2" Color="Color.Dark" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudSelect @bind-Value="personModel.Country" Label="País" Variant="Variant.Outlined"
+                        Margin="Margin.Dense" Required="true" HelperText="Selecciona tu país de residencia"
+                        For="@(() => personModel.Country)">
+                        @foreach (var country in countries)
+                        {
+                            <MudSelectItem Value="@country">@country</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="personModel.Biography" Label="Biografía" Variant="Variant.Outlined"
+                        Margin="Margin.Normal" Lines="4" Required="true" Counter="1000" MaxLength="1000"
+                        HelperText="Cuéntanos un poco sobre ti.(mínimo 50 caracteres)" Immediate="true" Class="mb-6"
+                        For="@(() => personModel.Biography)" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudButton Disabled="@isProcessing" Variant="Variant.Filled" Color="Color.Dark" FullWidth
+                        ButtonType="ButtonType.Submit">
+                        @if (isProcessing)
+                        {
+                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                            <MudText Class="ms-2">Enviando ...</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Convertirme en escritor</MudText>
+                        }
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </MudContainer>
+</MudContainer>
+
+@code {
+    private readonly List<string> countries = new()
+{
+"Argentina", "Bolivia", "Brasil", "Chile", "Colombia", "Costa Rica",
+"Cuba", "Ecuador", "El Salvador", "España", "Guatemala", "Honduras",
+"México", "Nicaragua", "Panamá", "Paraguay", "Perú", "Puerto Rico",
+"República Dominicana", "Uruguay", "Venezuela", "Estados Unidos",
+"Canadá", "Reino Unido", "Francia", "Alemania", "Italia", "Portugal"
+};
+    private bool isProcessing = false;
+    private PersonModel personModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        var role = user.FindFirst(c => c.Type == ClaimTypes.Role)?.Value;
+
+        if (role == "writer")
+        {
+            SnackBar.Add("✍️ Parece que ya eres escritor. ¡Bienvenido de vuelta a tu mundo de historias!", Severity.Info);
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        isProcessing = true;
+
+        await BecomeWriterAsync(personModel);
+
+        isProcessing = false;
+    }
+
+    private async Task BecomeWriterAsync(PersonModel model)
+    {
+        try
+        {
+            var result = await AccountService.BecomeWriterAsync(model);
+
+            if (result)
+            {
+                AuthStateProvider.NotifyAuthenticationStateChanged();
+                SnackBar.Add("🪄 ¡Listo! Ahora eres escritor en Mythos. ¡Es hora de escribir magia!", Severity.Success);
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                SnackBar.Add("Lo sentimos, pero ocurrio un error al convertirte en escritor, intentalo más tarde", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al convertir en usuario: " + ex.Message);
+            SnackBar.Add("Lo sentimos, ocurrio un error con el servidor, por favor intentelo más tarde", Severity.Error);
+        }
+    }
+}
