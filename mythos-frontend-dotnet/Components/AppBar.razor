@@ -16,7 +16,7 @@
 
 	<AuthorizeView Roles="writer">
 		<Authorized>
-			<MudButton Variant="Variant.Text">
+			<MudButton Variant="Variant.Text" OnClick="@(() => NavigationManager.NavigateTo("/create-novel"))">
 				Publicar novela
 			</MudButton>
 		</Authorized>
