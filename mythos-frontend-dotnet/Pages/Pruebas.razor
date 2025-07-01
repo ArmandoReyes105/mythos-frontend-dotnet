@@ -1,1 +1,142 @@
-﻿
+﻿@using mythos_frontend_dotnet.Pages.Novels.Components
+
+@page "/pruebas"
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="pa-6">
+    <MudText Typo="Typo.h4" Class="mb-6 font-weight-bold">Obras Publicadas</MudText>
+
+    <!-- Search Bar -->
+    <MudTextField @bind-Value="searchText" Placeholder="Buscar tus obras publicadas" Adornment="Adornment.Start"
+        AdornmentIcon="Icons.Material.Filled.Search" Variant="Variant.Outlined" Class="mb-8" FullWidth="true" />
+
+    <!-- Novelas Section -->
+    <MudText Typo="Typo.h5" Class="mb-4 font-weight-bold">Novelas</MudText>
+    <MudGrid Class="mb-8">
+        @foreach (var novela in novelas)
+        {
+            <MudItem xs="12" sm="6" md="3">
+                <NovelCard Book="novela" />
+            </MudItem>
+        }
+    </MudGrid>
+
+    <!-- Cuentos Cortos Section -->
+    <MudText Typo="Typo.h5" Class="mb-4 font-weight-bold">Cuentos Cortos</MudText>
+    <MudGrid>
+        @foreach (var cuento in cuentosCortos)
+        {
+            <MudItem xs="12" sm="6" md="3">
+                <NovelCard Book="cuento" />
+            </MudItem>
+        }
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private string searchText = "";
+
+    private List<Book> novelas = new()
+{
+new Book
+{
+Title = "La Pluma Carmesí",
+Author = "Por Sofia Roca",
+Genre = "Fantasía, Aventura",
+CoverUrl = "/placeholder.svg?height=300&width=200",
+CoverColor = "#2d5016"
+},
+new Book
+{
+Title = "La Pluma Carmesí",
+Author = "Por Sofia Roca",
+Genre = "Fantasía, Aventura",
+CoverUrl = "/placeholder.svg?height=300&width=200",
+CoverColor = "#2d5016"
+},
+new Book
+{
+Title = "La Pluma Carmesí",
+Author = "Por Sofia Roca",
+Genre = "Fantasía, Aventura",
+CoverUrl = "/placeholder.svg?height=300&width=200",
+CoverColor = "#2d5016"
+},
+new Book
+{
+Title = "La Pluma Carmesí",
+Author = "Por Sofia Roca",
+Genre = "Fantasía, Aventura",
+CoverUrl = "/placeholder.svg?height=300&width=200",
+CoverColor = "#2d5016"
+},
+new Book
+{
+Title = "Ecos de la Ciudad Olvidada",
+Author = "Por Mateo Bosque",
+Genre = "Aventura, Misterio",
+CoverUrl = "/placeholder.svg?height=300&width=200",
+CoverColor = "#8b7355"
+},
+new Book
+{
+Title = "Susurros del Mar Azul",
+Author = "Por Olivia Ríos",
+Genre = "Romance, Drama",
+CoverUrl = "/placeholder.svg?height=300&width=200",
+CoverColor = "#4a6741"
+},
+new Book
+{
+Title = "Crónicas del Escriba Estelar",
+Author = "Por Diego Espino",
+Genre = "Ciencia Ficción, Aventura",
+CoverUrl = "/placeholder.svg?height=300&width=200",
+CoverColor = "#1a3a52"
+}
+};
+
+    private List<Book> cuentosCortos = new()
+{
+new Book
+{
+Title = "El Último Atardecer",
+Author = "Por Sofia Roca",
+Genre = "Drama, Reflexión",
+CoverUrl = "/placeholder.svg?height=300&width=200",
+CoverColor = "#7a9b8e"
+},
+new Book
+{
+Title = "Un Cuento de Dos Mundos",
+Author = "Por Mateo Bosque",
+Genre = "Fantasía, Aventura",
+CoverUrl = "/placeholder.svg?height=300&width=200",
+CoverColor = "#f5f5dc"
+},
+new Book
+{
+Title = "El Jardín Secreto",
+Author = "Por Olivia Ríos",
+Genre = "Misterio, Drama",
+CoverUrl = "/placeholder.svg?height=300&width=200",
+CoverColor = "#6b8e6b"
+},
+new Book
+{
+Title = "La Llave Perdida",
+Author = "Por Diego Espino",
+Genre = "Aventura, Misterio",
+CoverUrl = "/placeholder.svg?height=300&width=200",
+CoverColor = "#a8b5a0"
+}
+};
+
+    public class Book
+    {
+        public string Title { get; set; } = "";
+        public string Author { get; set; } = "";
+        public string Genre { get; set; } = "";
+        public string CoverUrl { get; set; } = "";
+        public string CoverColor { get; set; } = "";
+    }
+}
