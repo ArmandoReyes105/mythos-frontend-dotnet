@@ -1,4 +1,4 @@
-@using static mythos_frontend_dotnet.Pages.Pruebas
+@inject NavigationManager NavigationManager
 
 <MudCard Class="book-card" Style="height: 100%; cursor: pointer;" @onclick="() => OnBookClick(Novel)">
 
@@ -55,7 +55,6 @@
 
     private void OnBookClick(NovelModel Novel)
     {
-        // Handle book click - navigate to book details, etc.
-        Console.WriteLine($"Clicked on book: {Novel.Title}");
+        NavigationManager.NavigateTo($"/novel/{Novel.Id}");
     }
 }

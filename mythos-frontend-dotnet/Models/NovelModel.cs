@@ -5,6 +5,8 @@ namespace mythos_frontend_dotnet.Models;
 
 public class NovelModel
 {
+    public string Id { get; set; } = string.Empty;
+
     [Required(ErrorMessage = "El título es obligatorio")]
     [StringLength(100, MinimumLength = 3, ErrorMessage = "El título debe tener entre 3 y 100 caracteres")]
     public string Title { get; set; } = string.Empty;
@@ -23,4 +25,6 @@ public class NovelModel
     public string CoverImageUrl { get; set; } = string.Empty;
 
     public string WriterAccountId { get; set; } = string.Empty;
+
+    public DateTime UpdatedAt { get; set; }
 }

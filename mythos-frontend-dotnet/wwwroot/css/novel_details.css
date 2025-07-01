@@ -1,0 +1,96 @@
+.custom-tabs {
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .tab-container {
+        display: flex;
+        gap: 0;
+    }
+
+    .tab-button {
+        background: none;
+        border: none;
+        padding: 12px 24px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #666;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        position: relative;
+    }
+
+    .tab-button.active {
+        color: #000;
+        border-bottom-color: #000;
+    }
+
+    .tab-button:hover:not(.active) {
+        color: #333;
+        background-color: #f5f5f5;
+    }
+
+    .tab-content {
+        margin-top: 32px;
+    }
+
+    .cover-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 32px;
+    }
+
+    .cover-image {
+        max-width: 400px;
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .content-section {
+        margin-bottom: 24px;
+    }
+
+    .section-title {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 12px;
+    }
+
+    .description-text {
+        line-height: 1.6;
+        color: #444;
+        text-align: justify;
+    }
+
+    .tags-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .genre-tag,
+    .tag-chip {
+        background-color: #f5f5f5;
+        color: #333;
+        border: 1px solid #e0e0e0;
+    }
+
+    .chapter-item {
+        padding: 16px 0;
+    }
+
+    .chapter-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    @media (max-width: 768px) {
+        .cover-image {
+            max-width: 300px;
+        }
+
+        .tab-button {
+            padding: 12px 16px;
+            font-size: 13px;
+        }
+    }

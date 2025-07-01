@@ -51,16 +51,33 @@ public class NovelService(NodeApiClient nodeClient) : INovelService
         return [.. rawList.Select(x => ConvertToNovelModel(x))];
     }
 
+    public async Task<NovelModel?> GetNovelByIdAsync(string id)
+    {
+        var response = await _nodeClient.GetAsync($"novels/{id}");
+
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        var rawNovel = await response.Content.ReadFromJsonAsync<NovelRawModel>();
+
+        if (rawNovel is null)
+            return null;
+
+        return ConvertToNovelModel(rawNovel);
+    }
+
     private NovelModel ConvertToNovelModel(NovelRawModel raw)
     {
         return new NovelModel
         {
+            Id = raw.Id,
             Title = raw.Title,
             Description = raw.Description,
             CoverImageUrl = raw.CoverImageUrl,
             WriterAccountId = raw.WriterAccountId,
             Tags = raw.Tags,
-            Genres = raw.Genres.FirstOrDefault() ?? new List<string>()
+            Genres = raw.Genres.FirstOrDefault() ?? new List<string>(),
+            UpdatedAt = raw.UpdatedAt
         };
     }
 }

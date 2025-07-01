@@ -1,6 +1,16 @@
-﻿@page "/pruebas/{NovelId}"
+@inject ISnackbar Snackbar
+@inject INovelService NovelService
+@inject MythosAuthStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+
+@page "/novel/{NovelId}"
+
+<PageTitle>Capítulo</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <div style="position: absolute;">
+        <IconBackButton />
+    </div>
     <!-- Novel Title -->
     <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-2" Style="font-weight: 700;">
         @novel.Title
@@ -10,10 +20,10 @@
     <div class="custom-tabs mb-6">
         <div class="tab-container">
             <button class="tab-button @(activeTab == 0 ? "active" : "")" @onclick="() => SetActiveTab(0)">
-                Information
+                Información
             </button>
             <button class="tab-button @(activeTab == 1 ? "active" : "")" @onclick="() => SetActiveTab(1)">
-                Chapters
+                Capítulos
             </button>
         </div>
     </div>
@@ -25,8 +35,8 @@
         <div class="tab-content">
             <!-- Cover Image -->
             <div class="cover-container mb-6">
-                <MudImage Src="https://picsum.photos/200" Alt="@novel.Title" Class="cover-image"
-                    ObjectFit="ObjectFit.Cover" />
+                <MudImage Elevation="7" Src="@novel.CoverImageUrl" Alt="@novel.Title" Style="aspect-ratio: 9/10;"
+                    Class="cover-image" ObjectFit="ObjectFit.Cover" />
             </div>
 
             <!-- Description -->
@@ -39,12 +49,12 @@
             <!-- Genres -->
             <div class="content-section mb-4">
                 <MudText Typo="Typo.h6" Class="section-title mb-3">
-                    Genres
+                    Género
                 </MudText>
                 <div class="tags-container">
                     @foreach (var genre in novel.Genres)
                     {
-                        <MudChip T="string" Text="@genre" Color="Color.Default" Size="Size.Small" Class="genre-tag" />
+                        <MudChip T="string" Text="@genre" Color="Color.Dark" />
                     }
                 </div>
             </div>
@@ -52,20 +62,20 @@
             <!-- Tags -->
             <div class="content-section mb-4">
                 <MudText Typo="Typo.h6" Class="section-title mb-3">
-                    Tags
+                    Categorías
                 </MudText>
                 <div class="tags-container">
                     @foreach (var tag in novel.Tags)
                     {
-                        <MudChip T="string" Text="@tag" Color="Color.Default" Size="Size.Small" Class="tag-chip" />
+                        <MudChip T="string" Text="@tag" Color="Color.Dark" Variant="Variant.Text" />
                     }
                 </div>
             </div>
 
             <!-- Last Updated -->
             <div class="content-section">
-                <MudText Typo="Typo.body2" Color="Color.Secondary">
-                    Last updated: @novel.LastUpdated.ToString("MMMM dd, yyyy")
+                <MudText Typo="Typo.body2" Color="Color.Warning">
+                    Actualizado: @novel.UpdatedAt.ToString("MMMM dd, yyyy")
                 </MudText>
             </div>
         </div>
@@ -74,10 +84,21 @@
     {
         <!-- Chapters Tab Content -->
         <div class="tab-content">
+
+            @if (isTheAuthor)
+            {
+                <div class="d-flex justify-end mb-2">
+                    <MudButton Variant="Variant.Filled" Color="Color.Dark">
+                        <MudIcon Icon="@Icons.Material.Filled.Add" />
+                        Agregar capítulo
+                    </MudButton>
+                </div>
+            }
+
             <MudCard Elevation="0">
                 <MudCardContent Class="pa-0">
-                    <MudList T="Chapter" Clickable="true">
-                        @foreach (var chapter in novel.Chapters)
+                    <MudList T="Chapter">
+                        @foreach (var chapter in Chapters)
                         {
                             <MudListItem OnClick="@(() => NavigateToChapter(chapter.Id))" Class="chapter-item">
                                 <div class="d-flex justify-space-between align-center w-100">
@@ -92,7 +113,7 @@
                                     <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Secondary" />
                                 </div>
                             </MudListItem>
-                            @if (chapter != novel.Chapters.Last())
+                            @if (chapter != Chapters.Last())
                             {
                                 <MudDivider />
                             }
@@ -106,13 +127,15 @@
 
 @code {
     [Parameter] public string NovelId { get; set; } = string.Empty;
-
+    private bool isTheAuthor = false;
     private int activeTab = 0;
-    private Novel novel = new Novel();
+    private NovelModel novel = new NovelModel();
+    private List<Chapter> Chapters = GenerateChapters();
 
     protected override async Task OnInitializedAsync()
     {
         await LoadNovelData();
+        isTheAuthor = await AuthStateProvider.GetUserIdAsync() == novel.WriterAccountId;
     }
 
     private void SetActiveTab(int tabIndex)
@@ -123,22 +146,29 @@
 
     private async Task LoadNovelData()
     {
-        await Task.Delay(100); // Simular llamada
-        novel = new Novel
+        try
         {
-            Id = NovelId,
-            Title = "The Crimson Quill",
-            Author = "Isabella Rossi",
-            Description = "In the mystical realm of Eldoria, where ancient magic intertwines...",
-            CoverImageUrl = "/images/cover.png",
-            Genres = new List<string> { "Fantasy", "Adventure", "Magic" },
-            Tags = new List<string> { "Eldoria", "Sorceress", "Quest", "Magic", "Prophecy" },
-            LastUpdated = new DateTime(2024, 7, 15),
-            Chapters = GenerateChapters()
-        };
+            var result = await NovelService.GetNovelByIdAsync(NovelId);
+
+            if (result is null)
+            {
+                Snackbar.Add("Lo sentimos ocurrio un error al intentar recuperar la novela, por favor intentelo más tarde",
+                Severity.Error);
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                novel = result;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al recuperar la novela: " + ex.Message);
+            Snackbar.Add("Lo sentimos, ocurrio un error con el servidor, por favor intentelo más tarde", Severity.Error);
+        }
     }
 
-    private List<Chapter> GenerateChapters()
+    private static List<Chapter> GenerateChapters()
     {
         var chapters = new List<Chapter>();
         var titles = new[]
@@ -164,20 +194,6 @@
     private void NavigateToChapter(int chapterId)
     {
         Console.WriteLine($"Navigating to chapter {chapterId}");
-        // Aquí pondrías la navegación real si es necesario
-    }
-
-    public class Novel
-    {
-        public string Id { get; set; } = string.Empty;
-        public string Title { get; set; } = string.Empty;
-        public string Author { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string CoverImageUrl { get; set; } = string.Empty;
-        public List<string> Genres { get; set; } = new();
-        public List<string> Tags { get; set; } = new();
-        public DateTime LastUpdated { get; set; }
-        public List<Chapter> Chapters { get; set; } = new();
     }
 
     public class Chapter

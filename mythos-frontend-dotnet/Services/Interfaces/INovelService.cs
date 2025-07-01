@@ -9,4 +9,5 @@ public interface INovelService
     Task<string> UploadCoverImageAsync(IBrowserFile file);
     Task<bool> CreateNovelAsync(NovelModel novel);
     Task<List<NovelModel>?> GetNovelsAsync();
+    Task<NovelModel?> GetNovelByIdAsync(string id);
 }
