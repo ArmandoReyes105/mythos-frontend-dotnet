@@ -48,9 +48,16 @@
         <!-- Botón de comprar -->
         <div class="text-center">
             <MudButton Variant="Variant.Filled" Color="Color.Dark" Size="Size.Large"
-                StartIcon="@Icons.Material.Filled.ShoppingCart" FullWidth="true" Class="purchase-button"
-                OnClick="@HandleSubmit">
-                Comprar Capítulo
+                StartIcon="@Icons.Material.Filled.ShoppingCart" FullWidth="true" OnClick="@HandleSubmit">
+                @if (_isProcessing)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ms-2">Procesando</MudText>
+                }
+                else
+                {
+                    <MudText>Comprar capítulo</MudText>
+                }
             </MudButton>
         </div>
 
@@ -66,27 +73,17 @@
     .chapter-locked-card {
         margin: 0 auto;
     }
-
-    .purchase-button {
-        font-weight: 600;
-        text-transform: none;
-        border-radius: 8px;
-        padding: 12px 24px;
-        box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
-        transition: all 0.3s ease;
-    }
-
-    .purchase-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(156, 39, 176, 0.4);
-    }
 </style>
 
 @code {
     [Parameter] public ChapterModel Chapter { get; set; } = new();
 
+    private bool _isProcessing = false;
+
     public async Task HandleSubmit()
     {
+        _isProcessing = true;
+
         try
         {
             var result = await ChapterService.PurchaseChapterAsync(Chapter.Id, Chapter.PriceMythras);
@@ -94,7 +91,7 @@
             if (result.Success)
             {
                 Snackbar.Add("Felicidades, su compra ah sido procesada con exito", Severity.Success);
-                NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+                NavigationManager.NavigateTo($"/novel/{Chapter.NovelId}");
             }
             else
             {
@@ -105,6 +102,10 @@
         {
             Console.WriteLine("Error al comprar capitulo: " + ex.Message);
             Snackbar.Add("Lo sentimos, ocurrio un error con el servidor, por favor intentelo más tarde", Severity.Error);
+        }
+        finally
+        {
+            _isProcessing = false;
         }
     }
 }

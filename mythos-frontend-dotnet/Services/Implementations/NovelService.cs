@@ -11,7 +11,7 @@ public class NovelService(NodeApiClient nodeClient) : INovelService
 {
     private HttpClient _nodeClient = nodeClient.Client;
 
-    public async Task<bool> CreateNovelAsync(NovelModel novel)
+    public async Task<bool> CreateNovelAsync(CreateNovelModel novel)
     {
         var response = await _nodeClient.PostAsJsonAsync("novels", novel);
         return response.IsSuccessStatusCode;
@@ -66,7 +66,7 @@ public class NovelService(NodeApiClient nodeClient) : INovelService
         return ConvertToNovelModel(rawNovel);
     }
 
-    private NovelModel ConvertToNovelModel(NovelRawModel raw)
+    private static NovelModel ConvertToNovelModel(NovelRawModel raw)
     {
         return new NovelModel
         {

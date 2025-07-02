@@ -1,4 +1,10 @@
-<MudText>@Chapter.Content</MudText>
+<MudStack>
+    @foreach (var paragraph in Chapter.Content.Split("\n\n"))
+    {
+        <MudText Typo="Typo.body1" Style="font-size: large;">@paragraph</MudText>
+    }
+</MudStack>
+
 
 @code {
     [Parameter]
