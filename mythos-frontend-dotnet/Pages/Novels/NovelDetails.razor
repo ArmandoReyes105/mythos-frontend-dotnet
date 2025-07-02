@@ -102,10 +102,14 @@
                     <MudList T="ChapterModel">
                         @foreach (var chapter in Chapters)
                         {
-                            <MudListItem OnClick="@(() => NavigateToChapter(chapter.ChapterNumber))" Class="chapter-item">
+                            <MudListItem OnClick="@(() => NavigateToChapter(chapter.Id))" Class="chapter-item">
                                 <div class="d-flex justify-space-between align-center w-100">
                                     <div>
-                                        @if (chapter.IsFree)
+                                        @if (_purchasedChapters.Contains(chapter.Id))
+                                        {
+                                            <MudChip Color="Color.Info" Size="Size.Small">Comprado</MudChip>
+                                        }
+                                        else if (chapter.IsFree)
                                         {
                                             <MudChip Color="Color.Success" Size="Size.Small">Gratis</MudChip>
                                         }
@@ -141,6 +145,7 @@
     private int activeTab = 0;
     private NovelModel novel = new NovelModel();
     private List<ChapterModel> Chapters = new();
+    private List<string> _purchasedChapters = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -160,8 +165,9 @@
         {
             var result = await NovelService.GetNovelByIdAsync(NovelId);
             var chaptersResult = await ChapterService.GetChaptersByNovel(NovelId);
+            var purchasedChaptersResults = await ChapterService.GetPurchasedChaptersAsync();
 
-            if (result is null || chaptersResult is null)
+            if (result is null || chaptersResult is null || purchasedChaptersResults is null)
             {
                 Snackbar.Add("Lo sentimos ocurrio un error al intentar recuperar la novela, por favor intentelo más tarde",
                 Severity.Error);
@@ -171,6 +177,7 @@
             {
                 novel = result;
                 Chapters = chaptersResult;
+                _purchasedChapters = purchasedChaptersResults;
             }
         }
         catch (Exception ex)
@@ -180,8 +187,8 @@
         }
     }
 
-    private void NavigateToChapter(int chapterId)
+    private void NavigateToChapter(string chapterId)
     {
-        Console.WriteLine($"Navigating to chapter {chapterId}");
+        NavigationManager.NavigateTo($"/reader/novel/{NovelId}/chapter/{chapterId}");
     }
 }

@@ -5,7 +5,7 @@ using mythos_frontend_dotnet.Models;
 
 namespace mythos_frontend_dotnet.Services
 {
-    public class ChapterService(NodeApiClient nodeApiClient) : IChapterService
+    public class ChapterService(NodeApiClient nodeApiClient, HttpClient dotnetClient) : IChapterService
     {
         private readonly HttpClient nodeClient = nodeApiClient.Client;
 
@@ -26,6 +26,40 @@ namespace mythos_frontend_dotnet.Services
                 return null;
 
             return await response.Content.ReadFromJsonAsync<List<ChapterModel>>();
+        }
+
+        public async Task<ChapterModel?> GetChapterByIdAsync(string chapterId)
+        {
+            var response = await nodeClient.GetAsync($"chapters/{chapterId}");
+
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            return await response.Content.ReadFromJsonAsync<ChapterModel>();
+        }
+
+        public async Task<List<string>?> GetPurchasedChaptersAsync()
+        {
+            var response = await dotnetClient.GetAsync("purchases/contents");
+
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            return await response.Content.ReadFromJsonAsync<List<string>>();
+        }
+
+        public async Task<PurchaseResultModel> PurchaseChapterAsync(string chapterId, int price)
+        {
+            var response = await dotnetClient.PostAsJsonAsync("purchases/buy",
+            new
+            {
+                contentId = chapterId,
+                price = price
+            });
+
+            var result = await response.Content.ReadFromJsonAsync<PurchaseResultModel>();
+
+            return result ?? new() { Success = false, Message = "Respuesta nula" };
         }
     }
 }
