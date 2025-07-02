@@ -1,5 +1,6 @@
 @inject ISnackbar Snackbar
 @inject INovelService NovelService
+@inject IChapterService ChapterService
 @inject MythosAuthStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
 
@@ -88,7 +89,8 @@
             @if (isTheAuthor)
             {
                 <div class="d-flex justify-end mb-2">
-                    <MudButton Variant="Variant.Filled" Color="Color.Dark">
+                    <MudButton Variant="Variant.Filled" Color="Color.Dark"
+                        OnClick="@(() => NavigationManager.NavigateTo($"/novel/{NovelId}/chapter/create"))">
                         <MudIcon Icon="@Icons.Material.Filled.Add" />
                         Agregar capítulo
                     </MudButton>
@@ -97,20 +99,28 @@
 
             <MudCard Elevation="0">
                 <MudCardContent Class="pa-0">
-                    <MudList T="Chapter">
+                    <MudList T="ChapterModel">
                         @foreach (var chapter in Chapters)
                         {
-                            <MudListItem OnClick="@(() => NavigateToChapter(chapter.Id))" Class="chapter-item">
+                            <MudListItem OnClick="@(() => NavigateToChapter(chapter.ChapterNumber))" Class="chapter-item">
                                 <div class="d-flex justify-space-between align-center w-100">
                                     <div>
+                                        @if (chapter.IsFree)
+                                        {
+                                            <MudChip Color="Color.Success" Size="Size.Small">Gratis</MudChip>
+                                        }
+                                        else
+                                        {
+                                            <MudChip Color="Color.Warning" Size="Size.Small">De pago</MudChip>
+                                        }
                                         <MudText Typo="Typo.subtitle1">
-                                            Chapter @chapter.Number: @chapter.Title
+                                            Capítulo @chapter.ChapterNumber: @chapter.Title
                                         </MudText>
-                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                            @chapter.PublishedDate.ToString("MMMM dd, yyyy")
+                                        <MudText Typo="Typo.caption" Color="Color.Warning">
+                                            Actualizado: @chapter.UpdatedAt.ToString("MMMM dd, yyyy")
                                         </MudText>
                                     </div>
-                                    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Secondary" />
+                                    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Dark" />
                                 </div>
                             </MudListItem>
                             @if (chapter != Chapters.Last())
@@ -130,7 +140,7 @@
     private bool isTheAuthor = false;
     private int activeTab = 0;
     private NovelModel novel = new NovelModel();
-    private List<Chapter> Chapters = GenerateChapters();
+    private List<ChapterModel> Chapters = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -149,8 +159,9 @@
         try
         {
             var result = await NovelService.GetNovelByIdAsync(NovelId);
+            var chaptersResult = await ChapterService.GetChaptersByNovel(NovelId);
 
-            if (result is null)
+            if (result is null || chaptersResult is null)
             {
                 Snackbar.Add("Lo sentimos ocurrio un error al intentar recuperar la novela, por favor intentelo más tarde",
                 Severity.Error);
@@ -159,6 +170,7 @@
             else
             {
                 novel = result;
+                Chapters = chaptersResult;
             }
         }
         catch (Exception ex)
@@ -168,39 +180,8 @@
         }
     }
 
-    private static List<Chapter> GenerateChapters()
-    {
-        var chapters = new List<Chapter>();
-        var titles = new[]
-        {
-"The Awakening", "Shadows of the Past", "The Rogue Knight",
-"Ancient Prophecies", "The Mischievous Sprite", "Secrets Unveiled",
-"The Wise Old Sage", "Journey into Darkness", "Mythical Creatures", "Inner Demons"
-};
-
-        for (int i = 0; i < titles.Length; i++)
-        {
-            chapters.Add(new Chapter
-            {
-                Id = i + 1,
-                Number = i + 1,
-                Title = titles[i],
-                PublishedDate = new DateTime(2024, 6, 1).AddDays(i * 3)
-            });
-        }
-        return chapters;
-    }
-
     private void NavigateToChapter(int chapterId)
     {
         Console.WriteLine($"Navigating to chapter {chapterId}");
-    }
-
-    public class Chapter
-    {
-        public int Id { get; set; }
-        public int Number { get; set; }
-        public string Title { get; set; } = string.Empty;
-        public DateTime PublishedDate { get; set; }
     }
 }
