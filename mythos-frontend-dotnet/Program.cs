@@ -20,6 +20,8 @@ builder.Services.AddScoped<IChapterService, ChapterService>();
 builder.Services.AddScoped<INovelService, NovelService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 
+builder.Services.AddScoped<MythrasService>();
+
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<MythosAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<MythosAuthStateProvider>());
