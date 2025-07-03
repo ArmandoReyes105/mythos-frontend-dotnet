@@ -1,0 +1,36 @@
+@page "/mythras"
+
+@using mythos_frontend_dotnet.Pages.Settings.Components
+@using mythos_frontend_dotnet.Models
+@inject MythrasService MythrasService
+
+<h2>Comprar Mythras</h2>
+
+<!-- Mostrar listado de paquetes -->
+<MythrasPackageList OnSelectPackage ="HandleSelectPackage"/>
+
+
+<!-- Mostrar formulario de compra si se selecciona un paquete -->
+@if (selectedPackage is not null)
+{
+    <div class="mt-4">
+        <MythrasPurchaseForm selectedPackage="selectedPackage" OnCancel="ClearSelection" />
+    </div>
+}
+
+@code {
+    private MythrasPackage? selectedPackage;
+    
+
+    private void HandleSelectPackage(MythrasPackage pkg)
+    {
+        selectedPackage = pkg;
+    }
+
+    private void ClearSelection()
+    {
+        selectedPackage = null;
+    }
+
+    
+}
