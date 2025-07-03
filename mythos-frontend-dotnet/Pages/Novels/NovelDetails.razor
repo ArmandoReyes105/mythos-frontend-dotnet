@@ -5,6 +5,7 @@
 @inject NavigationManager NavigationManager
 
 @page "/novel/{NovelId}"
+@using mythos_frontend_dotnet.Pages.Reviews
 
 <PageTitle>Capítulo</PageTitle>
 
@@ -17,6 +18,13 @@
         @novel.Title
     </MudText>
 
+    <MudDivider Class="mb-4" />
+
+    <div class="cover-container mb-6">
+        <MudImage Elevation="7" Src="@novel.CoverImageUrl" Alt="@novel.Title" Style="aspect-ratio: 9/10;"
+            Class="cover-image" ObjectFit="ObjectFit.Cover" />
+    </div>
+
     <!-- Custom Tabs -->
     <div class="custom-tabs mb-6">
         <div class="tab-container">
@@ -26,6 +34,9 @@
             <button class="tab-button @(activeTab == 1 ? "active" : "")" @onclick="() => SetActiveTab(1)">
                 Capítulos
             </button>
+            <button class="tab-button @(activeTab == 2 ? "active" : "")" @onclick="() => SetActiveTab(2)">
+                Reseñas
+            </button>
         </div>
     </div>
 
@@ -34,12 +45,6 @@
     {
         <!-- Information Tab Content -->
         <div class="tab-content">
-            <!-- Cover Image -->
-            <div class="cover-container mb-6">
-                <MudImage Elevation="7" Src="@novel.CoverImageUrl" Alt="@novel.Title" Style="aspect-ratio: 9/10;"
-                    Class="cover-image" ObjectFit="ObjectFit.Cover" />
-            </div>
-
             <!-- Description -->
             <div class="content-section mb-6">
                 <MudText Typo="Typo.body1" Class="description-text">
@@ -81,7 +86,7 @@
             </div>
         </div>
     }
-    else
+    else if (activeTab == 1)
     {
         <!-- Chapters Tab Content -->
         <div class="tab-content">
@@ -105,24 +110,29 @@
                             <MudListItem OnClick="@(() => NavigateToChapter(chapter.Id))" Class="chapter-item">
                                 <div class="d-flex justify-space-between align-center w-100">
                                     <div>
-                                        @if (_purchasedChapters.Contains(chapter.Id))
-                                        {
-                                            <MudChip Color="Color.Info" Size="Size.Small">Comprado</MudChip>
-                                        }
-                                        else if (chapter.IsFree)
-                                        {
-                                            <MudChip Color="Color.Success" Size="Size.Small">Gratis</MudChip>
-                                        }
-                                        else
-                                        {
-                                            <MudChip Color="Color.Warning" Size="Size.Small">De pago</MudChip>
-                                        }
                                         <MudText Typo="Typo.subtitle1">
                                             Capítulo @chapter.ChapterNumber: @chapter.Title
                                         </MudText>
-                                        <MudText Typo="Typo.caption" Color="Color.Warning">
-                                            Actualizado: @chapter.UpdatedAt.ToString("MMMM dd, yyyy")
-                                        </MudText>
+
+                                        <MudStack Row AlignItems="AlignItems.Center">
+                                            @if (_purchasedChapters.Contains(chapter.Id))
+                                            {
+                                                <MudChip Color="Color.Info" Size="Size.Small">Comprado</MudChip>
+                                            }
+                                            else if (chapter.IsFree)
+                                            {
+                                                <MudChip Color="Color.Success" Size="Size.Small">Gratis</MudChip>
+                                            }
+                                            else
+                                            {
+                                                <MudChip Color="Color.Warning" Size="Size.Small">De pago</MudChip>
+                                            }
+
+                                            <MudText Typo="Typo.caption" Color="Color.Warning">
+                                                Actualizado: @chapter.UpdatedAt.ToString("MMMM dd, yyyy")
+                                            </MudText>
+                                        </MudStack>
+
                                     </div>
                                     <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Dark" />
                                 </div>
@@ -136,6 +146,10 @@
                 </MudCardContent>
             </MudCard>
         </div>
+    }
+    else
+    {
+        <ReviewList NovelId="@NovelId" />
     }
 </MudContainer>
 
@@ -165,7 +179,17 @@
         {
             var result = await NovelService.GetNovelByIdAsync(NovelId);
             var chaptersResult = await ChapterService.GetChaptersByNovel(NovelId);
-            var purchasedChaptersResults = await ChapterService.GetPurchasedChaptersAsync();
+            var purchasedChaptersResults = new List<string>();
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity?.IsAuthenticated == true)
+            {
+                purchasedChaptersResults = await ChapterService.GetPurchasedChaptersAsync();
+            }
+            else
+            {
+                purchasedChaptersResults = new();
+            }
+
 
             if (result is null || chaptersResult is null || purchasedChaptersResults is null)
             {

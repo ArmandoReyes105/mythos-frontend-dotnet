@@ -18,6 +18,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IChapterService, ChapterService>();
 builder.Services.AddScoped<INovelService, NovelService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<MythosAuthStateProvider>();
