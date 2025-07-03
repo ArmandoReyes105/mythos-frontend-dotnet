@@ -1,0 +1,23 @@
+<MudCard>
+    <MudCardContent>
+        <MudStack Row>
+            <MudAvatar>
+                <MudImage Src="https://picsum.photos/200" />
+            </MudAvatar>
+
+            <MudStack>
+                <MudStack Row>
+                    <MudText Style="font-weight: bold;" Typo="Typo.subtitle1">Usuario</MudText>
+                    <MudRating SelectedValue="@Review.Rating" ReadOnly />
+                </MudStack>
+
+                <MudText Typo="Typo.body1">@Review.Comment</MudText>
+            </MudStack>
+        </MudStack>
+    </MudCardContent>
+</MudCard>
+
+
+@code {
+    [Parameter] public ReviewModel Review { get; set; } = new();
+}

@@ -1,0 +1,111 @@
+@inject IChapterService ChapterService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<MudCard Elevation="3" Class="chapter-locked-card">
+    <MudCardContent Class="pa-6">
+        <!-- Header con ícono de candado -->
+        <div class="d-flex align-center mb-4">
+            <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Warning" Size="Size.Medium" Class="mr-3" />
+            <div>
+                <MudText Typo="Typo.h6">
+                    @Chapter.Title
+                </MudText>
+                <MudText Typo="Typo.caption">
+                    Capítulo @Chapter.ChapterNumber
+                </MudText>
+            </div>
+        </div>
+
+        <!-- Mensaje de capítulo bloqueado -->
+        <MudAlert NoIcon="false" Class="mb-4"
+            Style="background-color: rgb(230, 230, 230); border-left: 4px solid black;">
+            <MudText Typo="Typo.body2">
+                <strong>Capítulo Premium</strong>
+            </MudText>
+            <MudText Typo="Typo.caption">
+                Este capítulo requiere compra para poder ser leído
+            </MudText>
+        </MudAlert>
+
+        <!-- Información del precio -->
+        <MudPaper Elevation="1" Class="pa-3 mb-4" Style="">
+            <div class="d-flex justify-space-between align-center">
+                <div class="d-flex align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.MonetizationOn" Color="Color.Warning" Size="Size.Small"
+                        Class="mr-2" />
+                    <MudText Typo="Typo.subtitle1">
+                        <strong>@Chapter.PriceMythras Mythras</strong>
+                    </MudText>
+                </div>
+                <MudChip T="string" Size="Size.Medium" Variant="Variant.Text" Color="Color.Dark"
+                    Icon="@Icons.Material.Filled.Schedule">
+                    Publicado @Chapter.CreatedAt.ToString("dd/MM/yyyy")
+                </MudChip>
+            </div>
+        </MudPaper>
+
+        <!-- Botón de comprar -->
+        <div class="text-center">
+            <MudButton Variant="Variant.Filled" Color="Color.Dark" Size="Size.Large"
+                StartIcon="@Icons.Material.Filled.ShoppingCart" FullWidth="true" OnClick="@HandleSubmit">
+                @if (_isProcessing)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ms-2">Procesando</MudText>
+                }
+                else
+                {
+                    <MudText>Comprar capítulo</MudText>
+                }
+            </MudButton>
+        </div>
+
+        <!-- Información adicional -->
+        <MudDivider Class="my-3" />
+        <MudText Typo="Typo.caption" Align="Align.Center">
+            Una vez comprado, tendrás acceso permanente a este capítulo
+        </MudText>
+    </MudCardContent>
+</MudCard>
+
+<style>
+    .chapter-locked-card {
+        margin: 0 auto;
+    }
+</style>
+
+@code {
+    [Parameter] public ChapterModel Chapter { get; set; } = new();
+
+    private bool _isProcessing = false;
+
+    public async Task HandleSubmit()
+    {
+        _isProcessing = true;
+
+        try
+        {
+            var result = await ChapterService.PurchaseChapterAsync(Chapter.Id, Chapter.PriceMythras);
+
+            if (result.Success)
+            {
+                Snackbar.Add("Felicidades, su compra ah sido procesada con exito", Severity.Success);
+                NavigationManager.NavigateTo($"/novel/{Chapter.NovelId}");
+            }
+            else
+            {
+                Snackbar.Add(result.Message, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al comprar capitulo: " + ex.Message);
+            Snackbar.Add("Lo sentimos, ocurrio un error con el servidor, por favor intentelo más tarde", Severity.Error);
+        }
+        finally
+        {
+            _isProcessing = false;
+        }
+    }
+}

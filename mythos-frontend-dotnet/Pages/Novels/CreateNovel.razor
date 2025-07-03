@@ -1,0 +1,215 @@
+@inject ISnackbar Snackbar
+@inject MythosAuthStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject INovelService NovelService
+
+@attribute [Authorize(Roles = "writer")]
+
+@page "/create-novel"
+@using mythos_frontend_dotnet.Services.Interfaces
+
+<PageTitle>Crear Novela</PageTitle>
+
+<MudContainer Class="pa-4" MaxWidth="MaxWidth.Large">
+    <IconBackButton />
+
+    <MudContainer MaxWidth="MaxWidth.Medium">
+
+        <MudGrid Class="mt-3">
+            <MudItem xs="12" md="6">
+                <MudImage ObjectFit="ObjectFit.Cover" Src="@(imagePreviewUrl ?? "https://picsum.photos/200")"
+                    Alt="Previsualización de portada" Elevation="3" Class="rounded-lg" Style="width: 100%;" />
+                <MudFileUpload T="IBrowserFile" Accept=".png, .jpg" FilesChanged="@UploadFile" MaximumFileCount="1">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Filled" Color="Color.Dark"
+                            StartIcon="@Icons.Material.Filled.CloudUpload">
+                            Subir imagen
+                        </MudButton>
+                    </ActivatorContent>
+                </MudFileUpload>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+
+                <MudStack Class="mb-4" Spacing="1">
+                    <MudText Typo="Typo.h5">Publica tu novela</MudText>
+                    <MudText Typo="Typo.body2">
+                        Da vida a tu historia. Completa los campos del formulario y compártela con los lectores de
+                        Mythos.
+                    </MudText>
+                </MudStack>
+
+                <EditForm OnSubmit="@HandleSubmit" EditContext="@editContext">
+                    <DataAnnotationsValidator />
+                    <MudTextField @bind-Value="novelModel.Title" Label="Titulo" Required="true" Class="mb-4"
+                        Variant="Variant.Outlined" For="@(() => novelModel.Title)" Margin="Margin.Dense" />
+
+                    <MudTextField @bind-Value="novelModel.Description" Label="Descripción" Variant="Variant.Outlined"
+                        Margin="Margin.Dense" Lines="4" Required="true" Counter="1000" MaxLength="1000"
+                        HelperText="Cuéntanos un poco sobre tu novela." Immediate="true" Class="mb-6"
+                        For="@(() => novelModel.Description)" />
+
+                    <MudDivider Class="mb-4" />
+
+                    <MudSelect T="string" Label="Géneros" MultiSelection="true" Variant="Variant.Outlined"
+                        Margin="Margin.Dense"
+                        SelectedValuesChanged="(values) => HandleGenreSelectedValuesChanged(values)">
+                        @foreach (var genre in AVAILABLE_GENRES)
+                        {
+                            <MudSelectItem T=" string" Value="@genre">@genre</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <ValidationMessage For="() => novelModel.Genres" />
+
+                    <MudSelect T="string" Label="Tags" MultiSelection="true" Variant="Variant.Outlined"
+                        Margin="Margin.Dense" SelectedValuesChanged="(values) => HandleTagSelecteValuesChanged(values)">
+                        @foreach (var tag in AVAILABLE_TAGS)
+                        {
+                            <MudSelectItem T="string" Value="@tag">@tag</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <ValidationMessage For="() => novelModel.Tags" />
+
+                    <MudButton Disabled="@isProcessing" Variant="Variant.Filled" Color="Color.Dark" FullWidth
+                        ButtonType="ButtonType.Submit" Class="mt-3" EndIcon="@Icons.Material.Rounded.Send">
+                        @if (isProcessing)
+                        {
+                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                            <MudText Class="ms-2">Enviando ...</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Publicar novela</MudText>
+                        }
+                    </MudButton>
+                </EditForm>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+</MudContainer>
+
+@code {
+    private readonly List<string> AVAILABLE_GENRES = new()
+{
+"Acción", "Aventura", "Romance", "Terror", "Drama", "Fantasía", "Fantasía oscura",
+"Ciencia ficción", "Comedia", "Misterio", "Misterio sobrenatural", "Cultivo", "Superheroes"
+};
+
+    private readonly List<string> AVAILABLE_TAGS = new()
+{
+"Horror cósmico", "Ocultismo", "Sistema de pociones", "Protagonista inteligente", "Sociedades secretas",
+"Mundo detallado", "Conspiraciones", "Locura", "Terror psicológico", "Progresión de poder", "Dimensiones",
+"Sistema genético", "Cultivo moderno", "Torneos", "Tecnología avanzada", "Batallas épicas", "Mundo cruel",
+"Ascenso imparable", "Bucle temporal", "Anti héroe", "Superpoderes", "Optimización", "Distopía",
+"Narrativa tipo juego", "Humor negro", "Protagonista sarcastico", "Megacorporaciones"
+};
+    private IEnumerable<string> genreOptions = new List<string> { };
+    private IEnumerable<string> tagsOptions = new List<string> { };
+    private EditContext? editContext;
+    private bool isProcessing = false;
+    private IBrowserFile? coverImage = null;
+    private string? imagePreviewUrl;
+    private CreateNovelModel novelModel = new();
+
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(novelModel);
+    }
+
+    private async Task UploadFile(IBrowserFile image)
+    {
+        long maxAllowedSize = 10 * 1024 * 1024; // 10 MB
+
+        if (image == null)
+            return;
+
+        if (image.Size > maxAllowedSize)
+        {
+            Snackbar.Add("El archivo es demasiado grande, máximo 10MB", Severity.Error);
+            return;
+        }
+
+        coverImage = image;
+
+        try
+        {
+            using var stream = image.OpenReadStream(maxAllowedSize);
+            var buffer = new byte[image.Size];
+            int bytesRead = 0;
+            while (bytesRead < image.Size)
+            {
+                int read = await stream.ReadAsync(buffer, bytesRead, (int)image.Size - bytesRead);
+                if (read == 0) break; // fin del stream
+                bytesRead += read;
+            }
+            var base64 = Convert.ToBase64String(buffer);
+            imagePreviewUrl = $"data:{image.ContentType};base64,{base64}";
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al leer la imagen: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void HandleTagSelecteValuesChanged(IEnumerable<string> values) => novelModel.Tags = values.ToList();
+    private void HandleGenreSelectedValuesChanged(IEnumerable<string> values) => novelModel.Genres = values.ToList();
+
+    public async Task HandleSubmit()
+    {
+        isProcessing = true;
+
+        if (isModelCorrect())
+        {
+            await CreateNovelAsync();
+        }
+
+        isProcessing = false;
+    }
+
+    public async Task CreateNovelAsync()
+    {
+        try
+        {
+            var id = await AuthStateProvider.GetUserIdAsync();
+            novelModel.WriterAccountId = id!;
+            var imageUrl = await NovelService.UploadCoverImageAsync(coverImage!);
+            novelModel.CoverImageUrl = imageUrl;
+            var result = await NovelService.CreateNovelAsync(novelModel);
+
+            if (result)
+            {
+                Snackbar.Add("¡Novela creada exitosamente! Ahora puedes compartir tu historia con todos los lectores.",
+                Severity.Success);
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                Snackbar.Add("No se pudo crear la novela. Por favor, intenta nuevamente más tarde.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al crear la novela: " + ex.Message);
+            Snackbar.Add("Lo sentimos, ocurrio un error con el servidor, por favor intentelo más tarde");
+        }
+
+    }
+
+    private bool isModelCorrect()
+    {
+
+        if (imagePreviewUrl is null)
+        {
+            Snackbar.Add("Debe seleccionar una imagen de portada");
+            return false;
+        }
+
+        if (novelModel.Tags.Count <= 0 || novelModel.Genres.Count <= 0)
+        {
+            Snackbar.Add("Debe seleccionar por lo menos un género y un tag.");
+            return false;
+        }
+
+        return true;
+    }
+}
