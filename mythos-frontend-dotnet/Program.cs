@@ -33,7 +33,7 @@ builder.Services.AddScoped(sp =>
     handler.InnerHandler = new HttpClientHandler();
     var httpClient = new HttpClient(handler)
     {
-        BaseAddress = new Uri("https://localhost:7252/api/")
+        BaseAddress = new Uri(builder.Configuration.GetValue<string>("DotnetURL")!)
     };
     return httpClient;
 });
