@@ -1,0 +1,75 @@
+@using mythos_frontend_dotnet.Pages.Reader.Components
+@inject IChapterService ChapterService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+@page "/reader/novel/{NovelId}/chapter/{ChapterId}"
+
+@attribute [Authorize]
+
+<PageTitle>Lector Online</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="pt-4">
+    <!--Header-->
+    <MudStack Row AlignItems="AlignItems.Center">
+        <IconBackButton />
+        <MudText Typo="Typo.h4" Style="font-weight: bold;">@_chapter.Title</MudText>
+    </MudStack>
+    <MudText>Capítulo @_chapter.ChapterNumber</MudText>
+    <MudDivider Class="my-4" />
+
+    @if (_chapter.IsFree)
+    {
+        <ChapterReaderView Chapter="@_chapter" />
+    }
+    else
+    {
+        @if (_purchasedChapters.Contains(_chapter.Id))
+        {
+            <ChapterReaderView Chapter="@_chapter" />
+        }
+        else
+        {
+            <LockedReaderView Chapter="@_chapter" />
+        }
+    }
+
+</MudContainer>
+
+@code {
+    [Parameter] public string ChapterId { get; set; } = string.Empty;
+    [Parameter] public string NovelId { get; set; } = string.Empty;
+    public ChapterModel _chapter = new();
+    public List<string> _purchasedChapters = new();
+
+    protected async override Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            var chapterResult = await ChapterService.GetChapterByIdAsync(ChapterId);
+            var purchasedChaptersResults = await ChapterService.GetPurchasedChaptersAsync();
+
+            if (chapterResult is null || purchasedChaptersResults is null)
+            {
+                Snackbar.Add("Hubo un problema al obtener la información del capítulo. Estamos trabajando para solucionarlo.",
+                Severity.Error);
+                NavigationManager.NavigateTo($"/novel/{NovelId}");
+            }
+            else
+            {
+                _chapter = chapterResult;
+                _purchasedChapters = purchasedChaptersResults;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al cargar el lector: " + ex.Message);
+            Snackbar.Add("Lo sentimos, ocurrio un error con el servidor, por favor intentelo más tarde", Severity.Error);
+        }
+    }
+}

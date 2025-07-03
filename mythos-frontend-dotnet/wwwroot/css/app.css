@@ -1,4 +1,5 @@
 @import url('login.css');
+@import url('novel_details.css');
 
 .valid.modified:not([type=checkbox]) {
     outline: 1px solid #26b050;

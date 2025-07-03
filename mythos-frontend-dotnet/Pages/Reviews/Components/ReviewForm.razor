@@ -1,0 +1,72 @@
+@inject IReviewService ReviewService
+@inject ISnackbar Snackbar
+@inject MythosAuthStateProvider AuthStateProvider
+
+<MudCard>
+    <MudCardContent>
+        <MudStack Row>
+            <MudAvatar>Yo</MudAvatar>
+
+            <MudStack Style="width: 100%">
+                <MudText Style="font-weight: bold;" Typo="Typo.subtitle1">Escribe tu comentario</MudText>
+
+                <MudRating @bind-SelectedValue="_review.Rating" MaxValue="5" />
+
+                <MudTextField T="string" Variant="Variant.Outlined" FullWidth="true" Label="Comentario" Lines="3"
+                    @bind-Value="_review.Comment" />
+
+                <MudButton OnClick="CreateReview" Variant="Variant.Filled" Color="Color.Dark">Enviar reseña
+                </MudButton>
+            </MudStack>
+        </MudStack>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    private ReviewModel _review = new();
+
+    [Parameter] public string NovelId { get; set; } = string.Empty;
+
+    [Parameter] public EventCallback<ReviewModel> OnReviewCreated { get; set; }
+
+    private async Task CreateReview()
+    {
+        if (_review.Rating == 0)
+        {
+            Snackbar.Add("Por favor asigna una calificación.", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_review.Comment))
+        {
+            Snackbar.Add("El comentario no puede estar vacío.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            var userId = await AuthStateProvider.GetUserIdAsync();
+            if (userId is null) return;
+
+            _review.NovelId = NovelId;
+            _review.AccountId = userId;
+            var result = await ReviewService.CreateReviewAsync(_review);
+
+            if (result)
+            {
+                Snackbar.Add("Reseña agregada correctamente", Severity.Success);
+                await OnReviewCreated.InvokeAsync(_review);
+                _review = new();
+            }
+            else
+            {
+                Snackbar.Add("Ocurrió un error al crear la reseña. Inténtalo más tarde.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al escribir reseña: " + ex.Message);
+            Snackbar.Add("Ocurrió un error con el servidor.", Severity.Error);
+        }
+    }
+}

@@ -1,0 +1,75 @@
+@using mythos_frontend_dotnet.Pages.Reviews.Components
+
+@inject IReviewService ReviewService
+@inject ISnackbar Snackbar
+
+<MudStack Row Class="mb-2">
+    <MudText Typo="Typo.h5">Reseñas</MudText>
+    <MudSpacer/>
+    <AuthorizeView>
+        <Authorized>
+            <MudButton OnClick="@(() => _isWritingReview = !_isWritingReview)">Escribir reseña</MudButton>
+        </Authorized>
+    </AuthorizeView>
+</MudStack>
+
+@if (_isWritingReview)
+{
+    <ReviewForm NovelId="@NovelId" OnReviewCreated="@HandleNewReview" />
+}
+
+@if (_reviewList.Count == 0)
+{
+    <MudText Typo="Typo.body2" Class="margin: auto;">No existen reseñas publicadas por el momento</MudText>
+}
+else
+{
+    <MudStack>
+        @foreach (var review in _reviewList)
+        {
+            <ReviewCard Review="@review"/>
+        }
+    </MudStack>
+}
+
+@code {
+    [Parameter] public string NovelId { get; set; } = string.Empty;
+
+    private List<ReviewModel> _reviewList = new();
+    private bool _isWritingReview = false; 
+
+    protected async override Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            var result = await ReviewService.GetReviewsByNovelAsync(NovelId);
+
+            if (result is null)
+            {
+                Snackbar.Add("Lo sentimos, ocurrio un error al intentar cargar las reseñas, intente recargar la página o intentelo más tarde");
+            }
+            else
+            {
+                _reviewList = result; 
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al recuperar las reviews: " + ex.Message);
+            Snackbar.Add("Lo sentimos, ocurrio un error con el servidor, por favor intentelo más tarde", Severity.Error);
+        }
+    }
+
+    private void HandleNewReview(ReviewModel newReview)
+    {
+        _reviewList.Add(newReview);
+        _isWritingReview = false;
+        StateHasChanged();
+    }
+
+}
