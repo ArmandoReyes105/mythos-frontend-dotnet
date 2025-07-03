@@ -1,0 +1,189 @@
+@using System.ComponentModel.DataAnnotations
+
+@inject IChapterService ChapterService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+@attribute [Authorize(Roles = "writer")]
+
+@page "/novel/{NovelId}/chapter/create"
+
+<PageTitle>Escribir capítulo</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="pt-4">
+
+    <MudStack Row AlignItems="AlignItems.Center">
+        <IconBackButton />
+        <MudText Typo="Typo.h5">Crear nuevo capítulo</MudText>
+    </MudStack>
+
+    <MudStepper CurrentStepColor="Color.Dark" CompletedStepColor="Color.Dark"
+        OnPreviewInteraction="@OnPreviewInteraction">
+        <MudStep Title="Escribe tu capítulo">
+            <EditForm EditContext="@editContext">
+                <DataAnnotationsValidator />
+                <MudTextField Margin="Margin.Dense" @bind-Value="chapter.Title" Label="Título del capítulo"
+                    Variant="Variant.Outlined" Required="true" For="@(() => chapter.Title)"
+                    HelperText="Ingresa un título atractivo para tu capítulo" Counter="100" MaxLength="100" />
+
+                <!-- Contenido del Capítulo -->
+                <MudTextField Class="mt-4" Margin="Margin.Dense" @bind-Value="chapter.Content"
+                    Label="Contenido del capítulo" Variant="Variant.Outlined" Lines="12" Required="true"
+                    For="@(() => chapter.Content)" HelperText="Escribe aquí el contenido completo de tu capítulo" />
+            </EditForm>
+        </MudStep>
+
+        <MudStep Title="Configura su precio" SecondaryText="Opcional">
+            <!-- Switch para capítulo premium -->
+            <MudCard Outlined="true">
+                <MudCardContent>
+                    <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                        <MudStack>
+                            <MudText Typo="Typo.subtitle1">¿Es un capítulo premium?</MudText>
+                            <MudText Typo="Typo.body2" Class="text-muted">
+                                Los capítulos premium requieren mytras para ser leídos
+                            </MudText>
+                        </MudStack>
+                        <MudSwitch T="bool" @bind-Checked="@isPaid" ValueChanged="@OnPremiumChanged" Color="Color.Dark"
+                            Size="Size.Medium" />
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+
+            @if (isPaid)
+            {
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudStack Spacing="3">
+                            <MudText Typo="Typo.subtitle1">Configuración de precio</MudText>
+
+                            <MudNumericField @bind-Value="chapter.PriceMythras" Label="Costo en mytras"
+                                Variant="Variant.Outlined" Min="0" Step="1" Required="true" MaxLength="3"
+                                For="@(() => chapter.PriceMythras)"
+                                HelperText="Precio que los lectores pagarán por este capítulo" Adornment="Adornment.Start"
+                                AdornmentIcon="@Icons.Material.Filled.MonetizationOn" AdornmentColor="Color.Dark" />
+
+                            @if (chapter.PriceMythras == 0)
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Success">Este capítulo es gratis</MudText>
+                            }
+
+                            <!-- Sugerencias -->
+                            <MudText Typo="Typo.caption" Class="text-muted">
+                                Sugerencias: Capítulo corto (1-5 mytras), normal (5-15), largo (15-30)
+                            </MudText>
+
+                            <!-- Botones rápidos -->
+                            <MudStack Row Spacing="2">
+                                <MudButton Size="Size.Small" Variant="Variant.Outlined"
+                                    OnClick="@(() => chapter.PriceMythras += 5)">+ 5 mytras</MudButton>
+                                <MudButton Size="Size.Small" Variant="Variant.Outlined"
+                                    OnClick="@(() => chapter.PriceMythras += 10)">+ 10 mytras</MudButton>
+                                <MudButton Size="Size.Small" Variant="Variant.Outlined"
+                                    OnClick="@(() => chapter.PriceMythras += 20)">+ 20 mytras</MudButton>
+                            </MudStack>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            }
+
+            @if (isSaving)
+            {
+                <MudProgressLinear Color="Color.Dark" Indeterminate="true" />
+                <MudText Typo="Typo.body2" Align="Align.Center">Guardando capítulo ...</MudText>
+            }
+        </MudStep>
+    </MudStepper>
+
+</MudContainer>
+
+@code {
+    [Parameter]
+    public string NovelId { get; set; } = string.Empty;
+
+    private CreateChapterModel chapter = new();
+    private EditContext? editContext;
+    private bool isPaid = false;
+    private bool isSaving = false;
+
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(chapter);
+    }
+
+    private async Task OnPreviewInteraction(StepperInteractionEventArgs args)
+    {
+        if (args.Action == StepAction.Complete && args.StepIndex == 0)
+        {
+            if (editContext is null)
+                return;
+
+            var valid = editContext.Validate();
+            if (!valid)
+            {
+                await Task.Delay(0);
+                Snackbar.Add("Campos incompletos. Por favor llena los campos requeridos.", Severity.Info);
+                args.Cancel = true;
+            }
+        }
+
+        if (args.Action == StepAction.Complete && args.StepIndex == 1)
+        {
+            if (chapter.PriceMythras > 1000)
+            {
+                Snackbar.Add("La cantidad maxima de Mythras permitidas en de 1000", Severity.Info);
+                args.Cancel = true;
+            }
+            else
+            {
+                var success = await SaveChapter();
+                if (success)
+                {
+                    NavigationManager.NavigateTo($"novel/{NovelId}");
+                }
+                else
+                {
+                    args.Cancel = true;
+                }
+            }
+        }
+    }
+
+    private void OnPremiumChanged(bool value)
+    {
+        isPaid = value;
+        StateHasChanged();
+    }
+
+    private async Task<bool> SaveChapter()
+    {
+        isSaving = true;
+
+        try
+        {
+            chapter.NovelId = NovelId;
+            var result = await ChapterService.CreateChapterAsync(chapter);
+
+            if (result)
+            {
+                Snackbar.Add($"El capítulo '{chapter.Title}' fue publicado con éxito", Severity.Success);
+                return true;
+            }
+            else
+            {
+                Snackbar.Add("Parece que algo se nos fue de las manos. Intenta nuevamente en unos minutos.", Severity.Error);
+                return false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al guardar el capítulo:" + ex.Message);
+            Snackbar.Add("Lo sentimos, ocurrio un error con el servidor, por favor intentelo más tarde", Severity.Error);
+            return false;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+}

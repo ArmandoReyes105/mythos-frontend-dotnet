@@ -1,0 +1,218 @@
+@inject ISnackbar Snackbar
+@inject INovelService NovelService
+@inject IChapterService ChapterService
+@inject MythosAuthStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+
+@page "/novel/{NovelId}"
+@using mythos_frontend_dotnet.Pages.Reviews
+
+<PageTitle>Capítulo</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <div style="position: absolute;">
+        <IconBackButton />
+    </div>
+    <!-- Novel Title -->
+    <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-2" Style="font-weight: 700;">
+        @novel.Title
+    </MudText>
+
+    <MudDivider Class="mb-4" />
+
+    <div class="cover-container mb-6">
+        <MudImage Elevation="7" Src="@novel.CoverImageUrl" Alt="@novel.Title" Style="aspect-ratio: 9/10;"
+            Class="cover-image" ObjectFit="ObjectFit.Cover" />
+    </div>
+
+    <!-- Custom Tabs -->
+    <div class="custom-tabs mb-6">
+        <div class="tab-container">
+            <button class="tab-button @(activeTab == 0 ? "active" : "")" @onclick="() => SetActiveTab(0)">
+                Información
+            </button>
+            <button class="tab-button @(activeTab == 1 ? "active" : "")" @onclick="() => SetActiveTab(1)">
+                Capítulos
+            </button>
+            <button class="tab-button @(activeTab == 2 ? "active" : "")" @onclick="() => SetActiveTab(2)">
+                Reseñas
+            </button>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    @if (activeTab == 0)
+    {
+        <!-- Information Tab Content -->
+        <div class="tab-content">
+            <!-- Description -->
+            <div class="content-section mb-6">
+                <MudText Typo="Typo.body1" Class="description-text">
+                    @novel.Description
+                </MudText>
+            </div>
+
+            <!-- Genres -->
+            <div class="content-section mb-4">
+                <MudText Typo="Typo.h6" Class="section-title mb-3">
+                    Género
+                </MudText>
+                <div class="tags-container">
+                    @foreach (var genre in novel.Genres)
+                    {
+                        <MudChip T="string" Text="@genre" Color="Color.Dark" />
+                    }
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="content-section mb-4">
+                <MudText Typo="Typo.h6" Class="section-title mb-3">
+                    Categorías
+                </MudText>
+                <div class="tags-container">
+                    @foreach (var tag in novel.Tags)
+                    {
+                        <MudChip T="string" Text="@tag" Color="Color.Dark" Variant="Variant.Text" />
+                    }
+                </div>
+            </div>
+
+            <!-- Last Updated -->
+            <div class="content-section">
+                <MudText Typo="Typo.body2" Color="Color.Warning">
+                    Actualizado: @novel.UpdatedAt.ToString("MMMM dd, yyyy")
+                </MudText>
+            </div>
+        </div>
+    }
+    else if (activeTab == 1)
+    {
+        <!-- Chapters Tab Content -->
+        <div class="tab-content">
+
+            @if (isTheAuthor)
+            {
+                <div class="d-flex justify-end mb-2">
+                    <MudButton Variant="Variant.Filled" Color="Color.Dark"
+                        OnClick="@(() => NavigationManager.NavigateTo($"/novel/{NovelId}/chapter/create"))">
+                        <MudIcon Icon="@Icons.Material.Filled.Add" />
+                        Agregar capítulo
+                    </MudButton>
+                </div>
+            }
+
+            <MudCard Elevation="0">
+                <MudCardContent Class="pa-0">
+                    <MudList T="ChapterModel">
+                        @foreach (var chapter in Chapters)
+                        {
+                            <MudListItem OnClick="@(() => NavigateToChapter(chapter.Id))" Class="chapter-item">
+                                <div class="d-flex justify-space-between align-center w-100">
+                                    <div>
+                                        <MudText Typo="Typo.subtitle1">
+                                            Capítulo @chapter.ChapterNumber: @chapter.Title
+                                        </MudText>
+
+                                        <MudStack Row AlignItems="AlignItems.Center">
+                                            @if (_purchasedChapters.Contains(chapter.Id))
+                                            {
+                                                <MudChip Color="Color.Info" Size="Size.Small">Comprado</MudChip>
+                                            }
+                                            else if (chapter.IsFree)
+                                            {
+                                                <MudChip Color="Color.Success" Size="Size.Small">Gratis</MudChip>
+                                            }
+                                            else
+                                            {
+                                                <MudChip Color="Color.Warning" Size="Size.Small">De pago</MudChip>
+                                            }
+
+                                            <MudText Typo="Typo.caption" Color="Color.Warning">
+                                                Actualizado: @chapter.UpdatedAt.ToString("MMMM dd, yyyy")
+                                            </MudText>
+                                        </MudStack>
+
+                                    </div>
+                                    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Dark" />
+                                </div>
+                            </MudListItem>
+                            @if (chapter != Chapters.Last())
+                            {
+                                <MudDivider />
+                            }
+                        }
+                    </MudList>
+                </MudCardContent>
+            </MudCard>
+        </div>
+    }
+    else
+    {
+        <ReviewList NovelId="@NovelId" />
+    }
+</MudContainer>
+
+@code {
+    [Parameter] public string NovelId { get; set; } = string.Empty;
+    private bool isTheAuthor = false;
+    private int activeTab = 0;
+    private NovelModel novel = new NovelModel();
+    private List<ChapterModel> Chapters = new();
+    private List<string> _purchasedChapters = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadNovelData();
+        isTheAuthor = await AuthStateProvider.GetUserIdAsync() == novel.WriterAccountId;
+    }
+
+    private void SetActiveTab(int tabIndex)
+    {
+        activeTab = tabIndex;
+        StateHasChanged();
+    }
+
+    private async Task LoadNovelData()
+    {
+        try
+        {
+            var result = await NovelService.GetNovelByIdAsync(NovelId);
+            var chaptersResult = await ChapterService.GetChaptersByNovel(NovelId);
+            var purchasedChaptersResults = new List<string>();
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity?.IsAuthenticated == true)
+            {
+                purchasedChaptersResults = await ChapterService.GetPurchasedChaptersAsync();
+            }
+            else
+            {
+                purchasedChaptersResults = new();
+            }
+
+
+            if (result is null || chaptersResult is null || purchasedChaptersResults is null)
+            {
+                Snackbar.Add("Lo sentimos ocurrio un error al intentar recuperar la novela, por favor intentelo más tarde",
+                Severity.Error);
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                novel = result;
+                Chapters = chaptersResult;
+                _purchasedChapters = purchasedChaptersResults;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al recuperar la novela: " + ex.Message);
+            Snackbar.Add("Lo sentimos, ocurrio un error con el servidor, por favor intentelo más tarde", Severity.Error);
+        }
+    }
+
+    private void NavigateToChapter(string chapterId)
+    {
+        NavigationManager.NavigateTo($"/reader/novel/{NovelId}/chapter/{chapterId}");
+    }
+}
