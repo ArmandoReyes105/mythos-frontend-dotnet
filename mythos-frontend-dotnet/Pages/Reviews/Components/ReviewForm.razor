@@ -50,6 +50,7 @@
 
             _review.NovelId = NovelId;
             _review.AccountId = userId;
+            _review.Username = await AuthStateProvider.GetAuthUsernameAsync();
             var result = await ReviewService.CreateReviewAsync(_review);
 
             if (result)

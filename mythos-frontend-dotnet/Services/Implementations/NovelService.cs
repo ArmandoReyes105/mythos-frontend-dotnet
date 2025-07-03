@@ -43,12 +43,12 @@ public class NovelService(NodeApiClient nodeClient) : INovelService
         if (!response.IsSuccessStatusCode)
             return null;
 
-        var rawList = await response.Content.ReadFromJsonAsync<List<NovelRawModel>>();
+        var rawList = await response.Content.ReadFromJsonAsync<List<NovelModel>>();
 
         if (rawList is null)
             return null;
 
-        return [.. rawList.Select(x => ConvertToNovelModel(x))];
+        return rawList;
     }
 
     public async Task<NovelModel?> GetNovelByIdAsync(string id)
@@ -58,12 +58,12 @@ public class NovelService(NodeApiClient nodeClient) : INovelService
         if (!response.IsSuccessStatusCode)
             return null;
 
-        var rawNovel = await response.Content.ReadFromJsonAsync<NovelRawModel>();
+        var rawNovel = await response.Content.ReadFromJsonAsync<NovelModel>();
 
         if (rawNovel is null)
             return null;
 
-        return ConvertToNovelModel(rawNovel);
+        return rawNovel;
     }
 
     private static NovelModel ConvertToNovelModel(NovelRawModel raw)

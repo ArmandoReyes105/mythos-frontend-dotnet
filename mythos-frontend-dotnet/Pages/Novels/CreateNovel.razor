@@ -172,6 +172,7 @@
         {
             var id = await AuthStateProvider.GetUserIdAsync();
             novelModel.WriterAccountId = id!;
+            novelModel.WriterName = await AuthStateProvider.GetAuthUsernameAsync();
             var imageUrl = await NovelService.UploadCoverImageAsync(coverImage!);
             novelModel.CoverImageUrl = imageUrl;
             var result = await NovelService.CreateNovelAsync(novelModel);
