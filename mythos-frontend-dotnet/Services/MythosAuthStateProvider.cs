@@ -52,15 +52,15 @@ namespace mythos_frontend_dotnet.Services
             return user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         }
 
-        public async Task<string?> GetAuthUsernameAsync()
+        public async Task<string> GetAuthUsernameAsync()
         {
             var authState = await GetAuthenticationStateAsync();
             var user = authState.User;
 
             if (user.Identity is null || !user.Identity.IsAuthenticated)
-                return null;
+                return "";
 
-            return user.FindFirst(ClaimTypes.Name)?.Value;
+            return user.FindFirst(ClaimTypes.Name)?.Value ?? "";
         }
 
         public Task MarkUserAsLoggedOut()

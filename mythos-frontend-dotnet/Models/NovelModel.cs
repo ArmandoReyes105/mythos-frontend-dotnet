@@ -26,5 +26,7 @@ public class NovelModel
 
     public string WriterAccountId { get; set; } = string.Empty;
 
+    public string WriterName { get; set; } = string.Empty;
+
     public DateTime UpdatedAt { get; set; }
 }

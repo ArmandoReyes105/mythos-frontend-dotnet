@@ -1,0 +1,95 @@
+@using mythos_frontend_dotnet.Pages.Settings.Components
+
+@inject INovelService NovelService
+@inject MythosAuthStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+@attribute [Authorize(Roles = "writer")]
+
+@page "/settings/publications"
+
+@layout SettingsLayout
+
+<PageTitle>Mis publicaciones</PageTitle>
+
+<MudContainer Class="pa-6">
+
+    <MudText Typo="Typo.h5" Class="mb-4" Style="font-weight: bold;">Mis Novelas</MudText>
+
+    <MudTable T="NovelModel" Items="@Novels" Striped>
+        <HeaderContent>
+            <MudTh>Cover</MudTh>
+            <MudTh>
+                <MudTableSortLabel Enabled SortBy="new Func<NovelModel, object>(x => x.Title)">Titulo
+                </MudTableSortLabel>
+            </MudTh>
+            <MudTh>Tags</MudTh>
+            <MudTh>Opciones</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Cover">
+                <MudImage Src="@context.CoverImageUrl" Alt="Cover image" Style="max-width: 100px; aspect-ratio: 4/4;"
+                    ObjectFit="ObjectFit.Cover" Class="rounded-lg" />
+            </MudTd>
+
+            <MudTd DataLabel="Titulo">
+                <MudText Typo="Typo.h6">@context.Title</MudText>
+            </MudTd>
+
+            <MudTd>
+                <MudStack Row Wrap="Wrap.Wrap">
+                    @foreach (var genre in context.Genres.Take(3))
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="Color.Dark">@genre</MudChip>
+                    }
+                </MudStack>
+            </MudTd>
+
+            <MudTd>
+
+                <MudStack Row>
+                    <MudButton Color="Color.Dark" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit"
+                        OnClick="@(() => NavigationManager.NavigateTo($"/edit-novel/{@context.Id}"))">
+                        Editar</MudButton>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Outlined"
+                        Color="Color.Error" />
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudContainer>
+
+@code {
+
+    private List<NovelModel> Novels { get; set; } = new();
+
+    protected async override Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            var writerId = await AuthStateProvider.GetUserIdAsync();
+            if (!string.IsNullOrEmpty(writerId))
+            {
+                var novels = await NovelService.GetNovelsByWriterAsync(writerId);
+                Novels = novels ?? new List<NovelModel>();
+            }
+            else
+            {
+                Novels = new List<NovelModel>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al recuperar las novelas del escritor: " + ex.Message);
+            Snackbar.Add("Lo sentimos, ocurrio un error al cargar sus novelas, por favor intentelo más tarde.", Severity.Error);
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+}

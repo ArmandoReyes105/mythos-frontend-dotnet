@@ -66,18 +66,16 @@ public class NovelService(NodeApiClient nodeClient) : INovelService
         return rawNovel;
     }
 
-    private static NovelModel ConvertToNovelModel(NovelRawModel raw)
+    public async Task<List<NovelModel>?> GetNovelsByWriterAsync(string writerId)
     {
-        return new NovelModel
-        {
-            Id = raw.Id,
-            Title = raw.Title,
-            Description = raw.Description,
-            CoverImageUrl = raw.CoverImageUrl,
-            WriterAccountId = raw.WriterAccountId,
-            Tags = raw.Tags,
-            Genres = raw.Genres.FirstOrDefault() ?? new List<string>(),
-            UpdatedAt = raw.UpdatedAt
-        };
+        var response = await _nodeClient.GetAsync($"novels/search/writer/{writerId}");
+        var result = await response.Content.ReadFromJsonAsync<List<NovelModel>>();
+        return result;
+    }
+
+    public async Task<bool> UpdateNovelAsync(CreateNovelModel novel, string novelId)
+    {
+        var response = await _nodeClient.PutAsJsonAsync($"novels/{novelId}", novel);
+        return response.IsSuccessStatusCode;
     }
 }

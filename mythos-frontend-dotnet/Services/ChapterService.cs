@@ -61,5 +61,11 @@ namespace mythos_frontend_dotnet.Services
 
             return result ?? new() { Success = false, Message = "Respuesta nula" };
         }
+
+        public async Task<bool> UpdateChapterAsync(CreateChapterModel chapter, string chapterId)
+        {
+            var response = await nodeClient.PutAsJsonAsync($"chapters/{chapterId}", chapter);
+            return response.IsSuccessStatusCode;
+        }
     }
 }

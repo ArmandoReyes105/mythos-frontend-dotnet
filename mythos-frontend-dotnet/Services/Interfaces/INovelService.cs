@@ -10,4 +10,6 @@ public interface INovelService
     Task<bool> CreateNovelAsync(CreateNovelModel novel);
     Task<List<NovelModel>?> GetNovelsAsync();
     Task<NovelModel?> GetNovelByIdAsync(string id);
+    Task<List<NovelModel>?> GetNovelsByWriterAsync(string writerId);
+    Task<bool> UpdateNovelAsync(CreateNovelModel novel, string novelId);
 }

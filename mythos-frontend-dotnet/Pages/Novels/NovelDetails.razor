@@ -21,8 +21,8 @@
     <MudDivider Class="mb-4" />
 
     <div class="cover-container mb-6">
-        <MudImage Elevation="7" Src="@novel.CoverImageUrl" Alt="@novel.Title" Style="aspect-ratio: 9/10;"
-            Class="cover-image" ObjectFit="ObjectFit.Cover" />
+        <MudImage Elevation="7" Src="@novel.CoverImageUrl" Alt="@novel.Title"
+            Style="max-width: 350px; aspect-ratio: 4/5;" Class="cover-image" ObjectFit="ObjectFit.Cover" />
     </div>
 
     <!-- Custom Tabs -->
@@ -89,7 +89,7 @@
     else if (activeTab == 1)
     {
         <!-- Chapters Tab Content -->
-        <div class="tab-content">
+        <div class="tab-content mb-6">
 
             @if (isTheAuthor)
             {
@@ -134,6 +134,15 @@
                                         </MudStack>
 
                                     </div>
+
+                                    @if (isTheAuthor)
+                                    {
+                                        <MudSpacer />
+                                        <MudButton Class="mr-4"
+                                            OnClick="@(() => NavigationManager.NavigateTo($"/novel/{chapter.NovelId}/edit-chapter/{chapter.Id}"))">
+                                            Editar
+                                            capitulo</MudButton>
+                                    }
                                     <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Dark" />
                                 </div>
                             </MudListItem>
