@@ -44,8 +44,7 @@
                                 Los capítulos premium requieren mytras para ser leídos
                             </MudText>
                         </MudStack>
-                        <MudSwitch T="bool" @bind-Checked="@isPaid" ValueChanged="@OnPremiumChanged" Color="Color.Dark"
-                            Size="Size.Medium" />
+                        <MudSwitch T="bool" @bind-value="@isPaid" Color="Color.Dark" Size="Size.Medium" />
                     </MudStack>
                 </MudCardContent>
             </MudCard>
@@ -147,12 +146,6 @@
                 }
             }
         }
-    }
-
-    private void OnPremiumChanged(bool value)
-    {
-        isPaid = value;
-        StateHasChanged();
     }
 
     private async Task<bool> SaveChapter()

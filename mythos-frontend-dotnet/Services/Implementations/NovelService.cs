@@ -78,4 +78,10 @@ public class NovelService(NodeApiClient nodeClient) : INovelService
         var response = await _nodeClient.PutAsJsonAsync($"novels/{novelId}", novel);
         return response.IsSuccessStatusCode;
     }
+
+    public async Task<bool> DeleteNovelAsync(string novelId)
+    {
+        var response = await _nodeClient.DeleteAsync($"novels/{novelId}");
+        return response.IsSuccessStatusCode;
+    }
 }

@@ -1,5 +1,6 @@
 @using mythos_frontend_dotnet.Pages.Settings.Components
 
+@inject IDialogService DialogService
 @inject INovelService NovelService
 @inject MythosAuthStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
@@ -53,7 +54,7 @@
                         OnClick="@(() => NavigationManager.NavigateTo($"/edit-novel/{@context.Id}"))">
                         Editar</MudButton>
                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Outlined"
-                        Color="Color.Error" />
+                        Color="Color.Error" OnClick="@(() => OnDeleteClickAsync(context.Id))"/>
                 </MudStack>
             </MudTd>
         </RowTemplate>
@@ -92,4 +93,46 @@
         }
     }
 
+    private async Task OnDeleteClickAsync(string novelId)
+    {
+        var parameters = new DialogParameters<Dialog>
+        {
+            {x => x.ContentText, "Esta acción eliminará la novela permanentemente, incluidos todos sus capítulos y estadísticas."},
+            {x => x.ButtonText, "Eliminar" },
+            { x => x.Color, Color.Error }
+        };
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall }; 
+
+        var dialog =  await DialogService.ShowAsync<Dialog>("¿Estás seguro de que deseas continuar?", parameters, options);
+        var result =  await dialog.Result; 
+
+        if (!result!.Canceled)
+        {
+            await DeleteNovelAsync(novelId);
+        }
+    }
+
+    private async Task DeleteNovelAsync(string novelId)
+    {
+        try
+        {
+            var result = await NovelService.DeleteNovelAsync(novelId); 
+
+            if (result)
+            {
+                Snackbar.Add("Novela eliminada correctamente.", Severity.Success);
+                await LoadData(); 
+            }
+            else
+            {
+                Snackbar.Add("Lo sentimos, ocurrio un error al eliminar tu novela, por favor intentalo más tarde.", Severity.Error); 
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al eliminar la novela: " + ex.Message);
+            Snackbar.Add("Lo sentimos, ocurrio un error con el servidor, por favor intentelo más tarde.", Severity.Error);
+        }
+    }
 }
