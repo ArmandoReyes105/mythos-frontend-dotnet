@@ -19,6 +19,8 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IChapterService, ChapterService>();
 builder.Services.AddScoped<INovelService, NovelService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IWalletService, WalletService>();
+builder.Services.AddScoped<IMythosTransactionService, MythosTransactionService>();
 
 builder.Services.AddScoped<MythrasService>();
 

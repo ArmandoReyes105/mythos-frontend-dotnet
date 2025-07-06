@@ -1,0 +1,63 @@
+@inject IChapterService ChapterService
+@inject IMythosTransactionService TransactionService
+
+<MudCard Class="mb-4">
+    <MudCardContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.BarChart" Color="Color.Primary" />
+            <MudText Typo="Typo.h6" Class="font-bold">Resumen de la novela: @Novel.Title</MudText>
+        </MudStack>
+
+        <MudDivider Class="my-2" />
+
+        <MudStack Spacing="1">
+            <MudText Typo="Typo.subtitle2">Total de capítulos: @_chapters.Count</MudText>
+            <MudText Typo="Typo.subtitle2">Total de compras: @_purchases</MudText>
+            <MudText Typo="Typo.subtitle2" Color="Color.Success">Ingresos generados: @_earnings Mythras</MudText>
+        </MudStack>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public NovelModel Novel { get; set; } = new();
+
+    [Parameter] public List<MythosTransactionModel> Transactions { get; set; } = new();
+
+    private List<ChapterModel> _chapters = new();
+
+    private int _earnings = 0;
+    private int _purchases = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            var chaptersResult = await ChapterService.GetChaptersByNovel(Novel.Id);
+
+            if (chaptersResult is not null)
+            {
+                _chapters = chaptersResult;
+
+                foreach (var chapter in _chapters)
+                {
+                    var purchases = await TransactionService.GetPurchaseByChapterAsync(chapter.Id);
+
+                    if (purchases != null)
+                    {
+                        _purchases += purchases.Count;
+                        _earnings += purchases.Sum(p => p.MythrasPrice);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al recuperar capítulos o compras: " + ex.Message);
+        }
+    }
+}
