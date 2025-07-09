@@ -19,6 +19,10 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IChapterService, ChapterService>();
 builder.Services.AddScoped<INovelService, NovelService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IWalletService, WalletService>();
+builder.Services.AddScoped<IMythosTransactionService, MythosTransactionService>();
+
+builder.Services.AddScoped<MythrasService>();
 
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<MythosAuthStateProvider>();
@@ -31,7 +35,7 @@ builder.Services.AddScoped(sp =>
     handler.InnerHandler = new HttpClientHandler();
     var httpClient = new HttpClient(handler)
     {
-        BaseAddress = new Uri("https://localhost:7252/api/")
+        BaseAddress = new Uri(builder.Configuration.GetValue<string>("DotnetURL")!)
     };
     return httpClient;
 });

@@ -8,6 +8,7 @@ namespace mythos_frontend_dotnet.Services
         Task<List<ChapterModel>?> GetChaptersByNovel(string novelId);
         Task<ChapterModel?> GetChapterByIdAsync(string chapterId);
         Task<List<string>?> GetPurchasedChaptersAsync();
-        Task<PurchaseResultModel> PurchaseChapterAsync(string chapterId, int price);
+        Task<PurchaseResultModel> PurchaseChapterAsync(string chapterId, string writerId, int price);
+        Task<bool> UpdateChapterAsync(CreateChapterModel chapter, string chapterId);
     }
 }

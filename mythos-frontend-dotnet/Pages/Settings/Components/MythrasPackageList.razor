@@ -1,0 +1,74 @@
+@using mythos_frontend_dotnet.Models
+@inject MythrasService MythrasService
+
+<MudText Typo="Typo.h4" Align="Align.Center" Class="mb-2">
+    Elige un paquete de Mythras
+</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center" Class="mb-4 mud-text-secondary">
+    Selecciona el paquete que mejor se adapte a tus necesidades y obtén Mythras con bonificación.
+</MudText>
+
+@if (Packages.Count == 0)
+{
+    <MudText Color="Color.Error">No hay paquetes disponibles.</MudText>
+}
+else
+{
+    <MudGrid Spacing="3" Justify="Justify.Center" >
+        @foreach (var pkg in Packages.Select((value, index) => new { value, index }))
+        {
+            <MudItem xs="12" sm="6" md="4" >
+                <MudCard Class="hover-elevation-8" Style="border-radius: 12px; border: 2px solid #e5e7eb;" >
+                    <MudCardContent Class="d-flex flex-column align-center text-center p-4">
+                        
+                            @switch (pkg.value.MythrasPackageId)
+                            {
+                                case 1:
+                                    <MudIcon Icon="@Icons.Material.Filled.Diamond" Color="Color.Primary" Style="font-size:48px;" />;
+                                    break;
+                                case 2:
+                                    <MudIcon Icon="@Icons.Material.Filled.Star" Color="Color.Warning" Style="font-size:48px;" />;
+                                    break;
+                                default:
+                                    <MudIcon Icon="@Icons.Material.Filled.CardGiftcard" Color="Color.Secondary" Style="font-size:48px;" />;
+                                    break;
+                            }
+                        
+                        <MudText Typo="Typo.h6" Class="mt-2">@pkg.value.Name</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
+                            Mythras: @pkg.value.MythrasAmount (+@pkg.value.BonusMythras bonus)
+                        </MudText>
+                        <MudText Typo="Typo.h5" Class="fw-bold mt-2">
+                            $@pkg.value.Price.ToString("F2")
+                        </MudText>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Default"
+                                   Class="mt-3 w-100"
+                                   Style="background-color: black; color: white; border-radius: 8px;"
+                                   OnClick="() => OnSelectPackage.InvokeAsync(pkg.value)">
+                            Seleccionar
+                        </MudButton>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@code {
+    [Parameter]
+    public EventCallback<MythrasPackage> OnSelectPackage { get; set; }
+    public List<MythrasPackage> Packages { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Packages = await MythrasService.GetPackagesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar paquetes: {ex.Message}");
+        }
+    }
+}

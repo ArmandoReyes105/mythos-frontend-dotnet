@@ -1,0 +1,38 @@
+@page "/settings/mythras"
+@layout SettingsLayout
+
+@using mythos_frontend_dotnet.Pages.Settings.Components
+@using mythos_frontend_dotnet.Models
+@inject MythrasService MythrasService
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4"> 
+<MudText Typo="Typo.h3" Align="Align.Center">Comprar Mythras</MudText>
+
+
+<MythrasPackageList OnSelectPackage ="HandleSelectPackage"/>
+
+
+
+@if (selectedPackage is not null)
+{
+    <div class="mt-4">
+        <MythrasPurchaseForm selectedPackage="selectedPackage" OnCancel="ClearSelection" />
+    </div>
+}
+</MudContainer>
+@code {
+    private MythrasPackage? selectedPackage;
+    
+
+    private void HandleSelectPackage(MythrasPackage pkg)
+    {
+        selectedPackage = pkg;
+    }
+
+    private void ClearSelection()
+    {
+        selectedPackage = null;
+    }
+
+    
+}

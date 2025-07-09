@@ -1,0 +1,121 @@
+@inject IWalletService WalletService
+@inject IMythosTransactionService MythosTransactionService
+@inject MythosAuthStateProvider AuthStateProvider
+@inject INovelService NovelService
+@inject ISnackbar Snackbar
+
+@page "/settings/stats"
+@using mythos_frontend_dotnet.Pages.Novels.Components
+
+@layout SettingsLayout
+
+@attribute [Authorize(Roles = "writer")]
+
+<PageTitle>Estadísticas</PageTitle>
+
+<MudContainer Class="pa-4" MaxWidth="MaxWidth.ExtraExtraLarge">
+    <MudText Class="mb-4" Typo="Typo.h4">Mis Estadísticas</MudText>
+    <MudDivider Class="mb-4" />
+
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudStack Row>
+                        <MudIcon Icon="@Icons.Material.Outlined.CurrencyLira" Color="Color.Warning" />
+                        <MudText Typo="Typo.h5" GutterBottom>MI CARTERA</MudText>
+                    </MudStack>
+
+                    <MudText Typo="Typo.caption">
+                        Última actualización: @_wallet.LastUpdated.ToLocalTime().ToString("dd MMMM yyyy - HH:mm")
+                    </MudText>
+
+
+
+                    <MudDivider Class="my-2" />
+
+                    <MudText Typo="Typo.caption">BALANCE</MudText>
+
+                    <MudText Typo="Typo.h4" Class="mb-2" Style="font-weight: 600;">
+                        @_wallet.MythrasBalance Mythras
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="2" Style="height: 100%">
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1" GutterBottom>Gastos e ingresos</MudText>
+
+                    <MudDivider Class="my-2" />
+
+                    <MudText Typo="Typo.caption">BALANCE</MudText>
+                    <MudStack Row>
+                        <MudText Typo="Typo.subtitle2">Ingresos: @_receivedTransactions.Where(t => t.Type == 2).Sum(t => t.Amount)
+                        </MudText>
+                        <MudSpacer />
+                        <MudText Typo="Typo.subtitle2">Egresos: @_receivedTransactions.Where(t => t.Type == 3).Sum(t => t.Amount)</MudText>
+                    </MudStack>
+                    <MudProgressLinear Rounded Class="mt-4" Value="@_receivedTransactions.Where(t => t.Type == 2).Sum(t => t.Amount)"
+                        Size="Size.Medium" Color="Color.Dark"
+                        Max="@(@_receivedTransactions.Where(t => t.Type == 3).Sum(t => t.Amount) + @_receivedTransactions.Where(t => t.Type == 2).Sum(t => t.Amount))" />
+
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudText Typo="Typo.h5">Ganancias por novela</MudText>
+        </MudItem>
+
+        @foreach (var novel in _novels)
+        {
+            <MudItem xs="12">
+                <NovelStats Novel="@novel" Transactions="@_receivedTransactions" />
+            </MudItem>
+        }
+
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private WalletModel _wallet = new();
+    private List<MythosTransactionModel> _receivedTransactions = new();
+    private List<NovelModel> _novels = new();
+
+    protected async override Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            var userId = await AuthStateProvider.GetUserIdAsync();
+            var walletResult = await WalletService.GetMyWalletAsync();
+            var receivedResult = await MythosTransactionService.GetReceivedTransactionsAsync();
+            var sentResult = await MythosTransactionService.GetSentTransactionsAsync();
+            var novelsResult = await NovelService.GetNovelsByWriterAsync(userId!);
+
+            if (walletResult is null || receivedResult is null || sentResult is null || novelsResult is null)
+            {
+                Snackbar.Add("Lo sentimos, ocurrio un error al recuperar su información, por favor intentelo más tarde.",
+                Severity.Error);
+            }
+            else
+            {
+                _wallet = walletResult;
+                _receivedTransactions = receivedResult;
+                _novels = novelsResult;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al cargar las estadisticas: " + ex.Message);
+            Snackbar.Add("Lo sentimos, ocurrio un error al cargar sus novelas, por favor intentelo más tarde.", Severity.Error);
+        }
+    }
+
+}

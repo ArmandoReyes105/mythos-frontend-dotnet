@@ -1,5 +1,6 @@
 @using mythos_frontend_dotnet.Pages.Reader.Components
 @inject IChapterService ChapterService
+@inject INovelService NovelService
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 
@@ -30,7 +31,7 @@
         }
         else
         {
-            <LockedReaderView Chapter="@_chapter" />
+            <LockedReaderView Chapter="@_chapter" WriterId="@_novel.WriterAccountId" />
         }
     }
 
@@ -39,8 +40,10 @@
 @code {
     [Parameter] public string ChapterId { get; set; } = string.Empty;
     [Parameter] public string NovelId { get; set; } = string.Empty;
+
     public ChapterModel _chapter = new();
     public List<string> _purchasedChapters = new();
+    public NovelModel _novel = new();
 
     protected async override Task OnInitializedAsync()
     {
@@ -53,8 +56,9 @@
         {
             var chapterResult = await ChapterService.GetChapterByIdAsync(ChapterId);
             var purchasedChaptersResults = await ChapterService.GetPurchasedChaptersAsync();
+            var novelResult = await NovelService.GetNovelByIdAsync(NovelId);
 
-            if (chapterResult is null || purchasedChaptersResults is null)
+            if (chapterResult is null || purchasedChaptersResults is null || novelResult is null)
             {
                 Snackbar.Add("Hubo un problema al obtener la información del capítulo. Estamos trabajando para solucionarlo.",
                 Severity.Error);
@@ -64,6 +68,7 @@
             {
                 _chapter = chapterResult;
                 _purchasedChapters = purchasedChaptersResults;
+                _novel = novelResult;
             }
         }
         catch (Exception ex)

@@ -24,4 +24,6 @@ public class CreateNovelModel
 
     public string WriterAccountId { get; set; } = string.Empty;
 
+    public string WriterName { get; set; } = string.Empty;
+
 }
