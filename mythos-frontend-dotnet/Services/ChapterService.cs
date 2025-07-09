@@ -48,18 +48,25 @@ namespace mythos_frontend_dotnet.Services
             return await response.Content.ReadFromJsonAsync<List<string>>();
         }
 
-        public async Task<PurchaseResultModel> PurchaseChapterAsync(string chapterId, int price)
+        public async Task<PurchaseResultModel> PurchaseChapterAsync(string chapterId, string writerId, int price)
         {
             var response = await dotnetClient.PostAsJsonAsync("purchases/buy",
             new
             {
                 contentId = chapterId,
-                price = price
+                writerId,
+                price
             });
 
             var result = await response.Content.ReadFromJsonAsync<PurchaseResultModel>();
 
             return result ?? new() { Success = false, Message = "Respuesta nula" };
+        }
+
+        public async Task<bool> UpdateChapterAsync(CreateChapterModel chapter, string chapterId)
+        {
+            var response = await nodeClient.PutAsJsonAsync($"chapters/{chapterId}", chapter);
+            return response.IsSuccessStatusCode;
         }
     }
 }

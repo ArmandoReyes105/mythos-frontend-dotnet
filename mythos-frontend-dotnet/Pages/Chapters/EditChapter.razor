@@ -6,9 +6,9 @@
 
 @attribute [Authorize(Roles = "writer")]
 
-@page "/novel/{NovelId}/chapter/create"
+@page "/novel/{NovelId}/edit-chapter/{ChapterId}"
 
-<PageTitle>Escribir capítulo</PageTitle>
+<PageTitle>Actualizar capítulo</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="pt-4">
 
@@ -44,7 +44,6 @@
                                 Los capítulos premium requieren mytras para ser leídos
                             </MudText>
                         </MudStack>
-                        <MudSwitch T="bool" @bind-value="@isPaid" Color="Color.Dark" Size="Size.Medium" />
                     </MudStack>
                 </MudCardContent>
             </MudCard>
@@ -97,17 +96,51 @@
 </MudContainer>
 
 @code {
-    [Parameter]
-    public string NovelId { get; set; } = string.Empty;
+    [Parameter] public string ChapterId { get; set; } = string.Empty;
+
+    [Parameter] public string NovelId { get; set; } = string.Empty;
 
     private CreateChapterModel chapter = new();
+    private CreateChapterModel _originalChapter = new();
     private EditContext? editContext;
-    private bool isPaid = false;
+    private bool isPaid = true;
     private bool isSaving = false;
 
-    protected override void OnInitialized()
+    protected async override Task OnInitializedAsync()
     {
         editContext = new EditContext(chapter);
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            var result = await ChapterService.GetChapterByIdAsync(ChapterId);
+
+            if (result is null)
+            {
+                Snackbar.Add("Lo sentimos, ocurrio un error al recuperar el capitulo, por favor intentelo más tarde", Severity.Error);
+                NavigationManager.NavigateTo($"/novel/{NovelId}");
+            }
+            else
+            {
+                chapter.Content = result.Content;
+                chapter.Title = result.Title;
+                chapter.PriceMythras = result.PriceMythras;
+                chapter.NovelId = result.NovelId;
+
+                _originalChapter.Content = result.Content;
+                _originalChapter.Title = result.Title;
+                _originalChapter.PriceMythras = result.PriceMythras;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al recuperar capítulo: " + ex.Message);
+            Snackbar.Add("Lo sentimos, ocurrio un error con el servidor, por favor intentelo más tarde", Severity.Error);
+            NavigationManager.NavigateTo($"/novel/{NovelId}");
+        }
     }
 
     private async Task OnPreviewInteraction(StepperInteractionEventArgs args)
@@ -135,6 +168,14 @@
             }
             else
             {
+
+                if (!HasChanged())
+                {
+                    Snackbar.Add("Debes realizar algún cambio para poder actualizar el capítulo.");
+                    args.Cancel = true;
+                    return;
+                }
+
                 var success = await SaveChapter();
                 if (success)
                 {
@@ -148,6 +189,26 @@
         }
     }
 
+    private void OnPremiumChanged(bool value)
+    {
+        isPaid = value;
+        StateHasChanged();
+    }
+
+    private bool HasChanged()
+    {
+        if (!string.Equals(_originalChapter.Title, chapter.Title))
+            return true;
+
+        if (!string.Equals(_originalChapter.Content, chapter.Content))
+            return true;
+
+        if (_originalChapter.PriceMythras != chapter.PriceMythras)
+            return true;
+
+        return false;
+    }
+
     private async Task<bool> SaveChapter()
     {
         isSaving = true;
@@ -155,11 +216,11 @@
         try
         {
             chapter.NovelId = NovelId;
-            var result = await ChapterService.CreateChapterAsync(chapter);
+            var result = await ChapterService.UpdateChapterAsync(chapter, ChapterId);
 
             if (result)
             {
-                Snackbar.Add($"El capítulo '{chapter.Title}' fue publicado con éxito", Severity.Success);
+                Snackbar.Add($"El capítulo '{chapter.Title}' fue actualizado con éxito", Severity.Success);
                 return true;
             }
             else

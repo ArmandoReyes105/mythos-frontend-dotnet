@@ -3,7 +3,7 @@
 @inject MythrasService MythrasService
 
 <MudPaper Class="p-4 mx-auto" Style="max-width:700px;">
-    <MudForm @ref="mudForm" Model="formData" OnValidSubmit="OnSubmit">
+    <MudForm @ref="mudForm" Model="formData">
         @if (selectedPackage != null)
         {
             <MudText Typo="Typo.h5" Class="mb-2">
@@ -15,70 +15,32 @@
 
             <MudText Typo="Typo.subtitle1">Detalles de pago</MudText>
 
-            
-            <MudTextField 
-                T="string"
-                @bind-Value="formData.CardNumber"
-                Label="Número de tarjeta"
-                Variant="Variant.Outlined"
-                Required="true"
-                For="@(() => formData.CardNumber)" 
-                MaxLength="16"
-                Pattern="^[0-9]*$"
-                Adornment="Adornment.Start"
-                AdornmentIcon="@Icons.Material.Filled.CreditCard"
-                AdornmentColor="Color.Default"/>
 
-            <MudTextField 
-                T="string"
-                @bind-Value="formData.CardHolder"
-                Label="Nombre del titular"
-                Variant="Variant.Outlined"
-                Required="true"
-                For="@(() => formData.CardHolder)"
-                MaxLength="50"
-                Pattern="^[a-zA-Z\s]*$"
-                Adornment="Adornment.Start"
-                AdornmentIcon="@Icons.Material.Filled.Person"
+            <MudTextField T="string" @bind-Value="formData.CardNumber" Label="Número de tarjeta" Variant="Variant.Outlined"
+                Required="true" For="@(() => formData.CardNumber)" MaxLength="16" Pattern="^[0-9]*$"
+                Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.CreditCard"
                 AdornmentColor="Color.Default" />
 
-            <MudTextField 
-                T="string"
-                @bind-Value="formData.ExpiryDate"
-                Label="Fecha de expiración (MM/YY)"
-                Variant="Variant.Outlined"
-                Required="true"
-                For="@(() => formData.ExpiryDate)" 
-                MaxLength="5"
-                Adornment="Adornment.Start"
-                AdornmentIcon="@Icons.Material.Filled.CalendarMonth"
-                AdornmentColor="Color.Default"/>
+            <MudTextField T="string" @bind-Value="formData.CardHolder" Label="Nombre del titular" Variant="Variant.Outlined"
+                Required="true" For="@(() => formData.CardHolder)" MaxLength="50" Pattern="^[a-zA-Z\s]*$"
+                Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Person" AdornmentColor="Color.Default" />
 
-            <MudTextField 
-                T="string"
-                @bind-Value="formData.Cvc"
-                Label="CVC"
-                Variant="Variant.Outlined"
-                Required="true"
-                For="@(() => formData.Cvc)" 
-                MaxLength="3"
-                Adornment="Adornment.Start"
-                AdornmentIcon="@Icons.Material.Filled.Security"
-                AdornmentColor="Color.Default"/>
-            
-            <MudSelect T="string"
-                @bind-Value="formData.CardType"
-                Label="Tipo de tarjeta"
-                Variant="Variant.Outlined"
+            <MudTextField T="string" @bind-Value="formData.ExpiryDate" Label="Fecha de expiración (MM/YY)"
+                Variant="Variant.Outlined" Required="true" For="@(() => formData.ExpiryDate)" MaxLength="5"
+                Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.CalendarMonth"
+                AdornmentColor="Color.Default" />
+
+            <MudTextField T="string" @bind-Value="formData.Cvc" Label="CVC" Variant="Variant.Outlined" Required="true"
+                For="@(() => formData.Cvc)" MaxLength="3" Adornment="Adornment.Start"
+                AdornmentIcon="@Icons.Material.Filled.Security" AdornmentColor="Color.Default" />
+
+            <MudSelect T="string" @bind-Value="formData.CardType" Label="Tipo de tarjeta" Variant="Variant.Outlined"
                 Required="true">
                 <MudSelectItem Value="@("Visa")">Visa</MudSelectItem>
-                <MudSelectItem Value="@("Mastercard")">Mastercard</MudSelectItem
-                Adornment="Adornment.Start"
-                AdornmentIcon="@Icons.Material.Filled.CreditCard"
-                AdornmentColor="Color.Default">
-            
+                <MudSelectItem Value="@("Mastercard")">Mastercard</MudSelectItem>
+
             </MudSelect>
-            
+
 
             <MudDivider Class="my-4" />
 
@@ -86,58 +48,28 @@
 
             <MudDivider Class="my-4" />
 
-            <MudTextField 
-                T="string"
-                @bind-Value="formData.BillingAddress.Street"
-                Label="Calle"
-                Variant="Variant.Outlined"
-                Required="true"
-                For="@(() => formData.BillingAddress.Street)" 
-                MaxLength="50"
-                Adornment="Adornment.Start"
-                AdornmentIcon="@Icons.Material.Filled.LocationOn"
-                AdornmentColor="Color.Default"/>
+            <MudTextField T="string" @bind-Value="formData.BillingAddress.Street" Label="Calle" Variant="Variant.Outlined"
+                Required="true" For="@(() => formData.BillingAddress.Street)" MaxLength="50" Adornment="Adornment.Start"
+                AdornmentIcon="@Icons.Material.Filled.LocationOn" AdornmentColor="Color.Default" />
 
-            <MudTextField 
-                T="string"
-                @bind-Value="formData.BillingAddress.PostalCode"
-                Label="Código Postal"
-                Variant="Variant.Outlined"
-                Required="true"
-                For="@(() => formData.BillingAddress.PostalCode)" 
-                MaxLength="5"
-                Adornment="Adornment.Start"
-                AdornmentIcon="@Icons.Material.Filled.Mail"
-                AdornmentColor="Color.Default"/>
+            <MudTextField T="string" @bind-Value="formData.BillingAddress.PostalCode" Label="Código Postal"
+                Variant="Variant.Outlined" Required="true" For="@(() => formData.BillingAddress.PostalCode)" MaxLength="5"
+                Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Mail" AdornmentColor="Color.Default" />
 
-            <MudTextField 
-                T="string"
-                @bind-Value="formData.BillingAddress.City"
-                Label="Ciudad"
-                Variant="Variant.Outlined"
-                Required="true"
-                For="@(() => formData.BillingAddress.City)" 
-                MaxLength="20"
-                Adornment="Adornment.Start"
-                AdornmentIcon="@Icons.Material.Filled.LocationCity"
-                AdornmentColor="Color.Default"/>
+            <MudTextField T="string" @bind-Value="formData.BillingAddress.City" Label="Ciudad" Variant="Variant.Outlined"
+                Required="true" For="@(() => formData.BillingAddress.City)" MaxLength="20" Adornment="Adornment.Start"
+                AdornmentIcon="@Icons.Material.Filled.LocationCity" AdornmentColor="Color.Default" />
 
-            <MudTextField 
-                T="string"
-                @bind-Value="formData.BillingAddress.Country"
-                Label="País"
-                Variant="Variant.Outlined"
-                Required="true"
-                For="@(() => formData.BillingAddress.Country)" 
-                MaxLength="20"
-                Adornment="Adornment.Start"
-                AdornmentIcon="@Icons.Material.Filled.LocationOn"
-                AdornmentColor="Color.Default"/>
+            <MudTextField T="string" @bind-Value="formData.BillingAddress.Country" Label="País" Variant="Variant.Outlined"
+                Required="true" For="@(() => formData.BillingAddress.Country)" MaxLength="20" Adornment="Adornment.Start"
+                AdornmentIcon="@Icons.Material.Filled.LocationOn" AdornmentColor="Color.Default" />
 
             <MudDivider Class="my-3" />
 
             <MudStack Row="true" Spacing="2">
-                <MudButton Color="Color.Default" Variant="Variant.Filled" Style="background-color: black; color: white; border-radius: 8px;" Type="Submit" OnClick="OnSubmit">Confirmar compra</MudButton>
+                <MudButton Color="Color.Default" Variant="Variant.Filled"
+                    Style="background-color: black; color: white; border-radius: 8px;" ButtonType="ButtonType.Submit">
+                    Confirmar compra</MudButton>
                 <MudButton Color="Color.Default" Variant="Variant.Outlined" OnClick="Cancel">Cancelar</MudButton>
             </MudStack>
         }
@@ -147,7 +79,7 @@
         }
     </MudForm>
 
-    
+
 </MudPaper>
 
 @code {
@@ -162,7 +94,7 @@
     private PurchaseMythrasRequest formData = new();
     private PurchaseMythrasResponse? purchaseResult;
 
-    private Severity alertSeverity = Severity.Success;
+    //private Severity alertSeverity = Severity.Success;
 
     protected override void OnParametersSet()
     {
@@ -174,40 +106,37 @@
 
     private async Task OnSubmit()
     {
-         await mudForm.Validate();
+        await mudForm!.Validate();
 
-    if (mudForm.IsValid)
-    {
-        try
+        if (mudForm.IsValid)
         {
-            
-            purchaseResult = await MythrasService.PurchaseMythrasAsync(formData);
-            alertSeverity = Severity.Success;
-            Snackbar.Add("La compra se ha realizado exitosamente", Severity.Success);            
-
-        }
-        catch (Exception ex)
-        {
-            
-            purchaseResult = new PurchaseMythrasResponse
+            try
             {
-                Message = $"Error al procesar la compra: {ex.Message}",
-                MythrasBalance = 0,
-                WalletLastUpdated = DateTime.Now
-            };
-            alertSeverity = Severity.Error;
-            Snackbar.Add($"Error al procesar la compra: {ex.Message}", Severity.Error);
-        }
 
-        StateHasChanged();
-    }
+                purchaseResult = await MythrasService.PurchaseMythrasAsync(formData);
+                Snackbar.Add("La compra se ha realizado exitosamente", Severity.Success);
+
+            }
+            catch (Exception ex)
+            {
+
+                purchaseResult = new PurchaseMythrasResponse
+                {
+                    Message = $"Error al procesar la compra: {ex.Message}",
+                    MythrasBalance = 0,
+                    WalletLastUpdated = DateTime.Now
+                };
+                Snackbar.Add($"Error al procesar la compra: {ex.Message}", Severity.Error);
+            }
+
+            StateHasChanged();
+        }
     }
 
     private void Cancel()
     {
         formData = new();
         purchaseResult = null;
-        alertSeverity = Severity.Success;
         OnCancel.InvokeAsync();
     }
 }

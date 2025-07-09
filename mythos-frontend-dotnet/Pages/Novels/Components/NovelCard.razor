@@ -26,10 +26,10 @@
     <MudCardContent Class="pa-3">
         <MudText Typo="Typo.subtitle1" Class="mb-1" Style="font-weight: bold;">@Novel.Title</MudText>
 
-        @foreach (var tag in Novel.Tags.Take(3))
-        {
-            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Dark">@tag</MudChip>
-        }
+        <MudStack Row>
+            <MudIcon Icon="@Icons.Material.Filled.Book" />
+            <MudText>@Novel.WriterName</MudText>
+        </MudStack>
 
     </MudCardContent>
 </MudCard>

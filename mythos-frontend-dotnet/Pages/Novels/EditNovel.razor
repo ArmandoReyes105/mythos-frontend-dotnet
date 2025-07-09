@@ -5,7 +5,7 @@
 
 @attribute [Authorize(Roles = "writer")]
 
-@page "/create-novel"
+@page "/edit-novel/{NovelId}"
 @using mythos_frontend_dotnet.Services.Interfaces
 
 <PageTitle>Crear Novela</PageTitle>
@@ -16,9 +16,9 @@
     <MudContainer MaxWidth="MaxWidth.Medium">
 
         <MudGrid Class="mt-3">
-            <MudItem xs="12" md="6">
+            <MudItem xs="12" md="5">
                 <MudImage ObjectFit="ObjectFit.Cover" Src="@(imagePreviewUrl ?? "https://picsum.photos/200")"
-                    Alt="Previsualización de portada" Elevation="3" Class="rounded-lg" Style="width: 100%;" />
+                    Alt="Previsualización de portada" Elevation="3" Class="rounded-lg" Style="max-width: 400px; width: 100%; aspect-ratio: 4/5;" />
                 <MudFileUpload T="IBrowserFile" Accept=".png, .jpg" FilesChanged="@UploadFile" MaximumFileCount="1">
                     <ActivatorContent>
                         <MudButton Variant="Variant.Filled" Color="Color.Dark"
@@ -29,7 +29,7 @@
                 </MudFileUpload>
             </MudItem>
 
-            <MudItem xs="12" md="6">
+            <MudItem xs="12" md="7">
 
                 <MudStack Class="mb-4" Spacing="1">
                     <MudText Typo="Typo.h5">Publica tu novela</MudText>
@@ -51,24 +51,38 @@
 
                     <MudDivider Class="mb-4" />
 
-                    <MudSelect T="string" Label="Géneros" MultiSelection="true" Variant="Variant.Outlined"
-                        Margin="Margin.Dense"
-                        SelectedValuesChanged="(values) => HandleGenreSelectedValuesChanged(values)">
+                    <!--Genres select-->
+                    <MudSelect T="string" Label="Géneros" Variant="Variant.Outlined"
+                        Margin="Margin.Dense" Value="@($"{novelModel.Genres.Count} géneros seleccionados")" ValueChanged="@(value => novelModel.Genres.Add(value))">
                         @foreach (var genre in AVAILABLE_GENRES)
                         {
                             <MudSelectItem T=" string" Value="@genre">@genre</MudSelectItem>
                         }
                     </MudSelect>
-                    <ValidationMessage For="() => novelModel.Genres" />
+                    
+                    <MudStack Row Wrap="Wrap.Wrap" Spacing="1">
+                        @foreach (var genre in novelModel.Genres)
+                        {
+                            <MudChip T="string" Color="Color.Default" Size="Size.Small" Value="@genre" OnClose="@((args) => novelModel.Genres.Remove(args.Value!))">@genre</MudChip>
+                        }
+                    </MudStack>
 
-                    <MudSelect T="string" Label="Tags" MultiSelection="true" Variant="Variant.Outlined"
-                        Margin="Margin.Dense" SelectedValuesChanged="(values) => HandleTagSelecteValuesChanged(values)">
+
+                    <!--Tags select-->
+                    <MudSelect T="string" Label="Tags" Variant="Variant.Outlined"
+                        Margin="Margin.Dense" Value="@($"{novelModel.Tags.Count} tags seleccionados")" ValueChanged="@((value) => novelModel.Tags.Add(value))">
                         @foreach (var tag in AVAILABLE_TAGS)
                         {
                             <MudSelectItem T="string" Value="@tag">@tag</MudSelectItem>
                         }
                     </MudSelect>
-                    <ValidationMessage For="() => novelModel.Tags" />
+
+                    <MudStack Row Wrap="Wrap.Wrap" Spacing="1">
+                        @foreach (var tag in novelModel.Tags)
+                        {
+                            <MudChip T="string" Color="Color.Default" Size="Size.Small" Value="@tag" OnClose="@((args) => novelModel.Tags.Remove(args.Value!))">@tag</MudChip>
+                        }
+                    </MudStack>
 
                     <MudButton Disabled="@isProcessing" Variant="Variant.Filled" Color="Color.Dark" FullWidth
                         ButtonType="ButtonType.Submit" Class="mt-3" EndIcon="@Icons.Material.Rounded.Send">
@@ -79,7 +93,7 @@
                         }
                         else
                         {
-                            <MudText>Publicar novela</MudText>
+                            <MudText>Actualizar novela</MudText>
                         }
                     </MudButton>
                 </EditForm>
@@ -89,6 +103,7 @@
 </MudContainer>
 
 @code {
+    [Parameter] public string NovelId { get; set; } = string.Empty;
     private readonly List<string> AVAILABLE_GENRES = new()
 {
 "Acción", "Aventura", "Romance", "Terror", "Drama", "Fantasía", "Fantasía oscura",
@@ -103,17 +118,57 @@
 "Ascenso imparable", "Bucle temporal", "Anti héroe", "Superpoderes", "Optimización", "Distopía",
 "Narrativa tipo juego", "Humor negro", "Protagonista sarcastico", "Megacorporaciones"
 };
-    private IEnumerable<string> genreOptions = new List<string> { };
-    private IEnumerable<string> tagsOptions = new List<string> { };
     private EditContext? editContext;
     private bool isProcessing = false;
     private IBrowserFile? coverImage = null;
     private string? imagePreviewUrl;
     private CreateNovelModel novelModel = new();
+    private CreateNovelModel _originalModel = new(); 
 
-    protected override void OnInitialized()
+    protected async override Task OnInitializedAsync()
     {
         editContext = new EditContext(novelModel);
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            var result = await NovelService.GetNovelByIdAsync(NovelId);
+
+            if (result is null)
+            {
+                Snackbar.Add("Lo sentimos ocurrio un error al recuperar la novela, por favor intentelo más tarde", Severity.Error);
+                NavigationManager.NavigateTo("/settings/publications");
+            }
+            else
+            {
+                imagePreviewUrl = result.CoverImageUrl;
+
+                novelModel.WriterAccountId = result.WriterAccountId; 
+                novelModel.Title = result.Title;
+                novelModel.Description = result.Description;
+                novelModel.CoverImageUrl = result.CoverImageUrl; 
+                novelModel.Tags = result.Tags;
+                novelModel.Genres = result.Genres;
+
+                _originalModel = new CreateNovelModel
+                {
+                    Title = result.Title,
+                    Description = result.Description,
+                    Tags = new List<string>(result.Tags),
+                    Genres = new List<string>(result.Genres),
+                    CoverImageUrl = result.CoverImageUrl
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error recuperar la novela: " + ex.Message);
+            Snackbar.Add("Lo sentimos, ocurrio un error con el servidor, por favor intentelo más tarde", Severity.Error);
+            NavigationManager.NavigateTo("/settings/publications");
+        }
     }
 
     private async Task UploadFile(IBrowserFile image)
@@ -151,47 +206,49 @@
         }
     }
 
-    private void HandleTagSelecteValuesChanged(IEnumerable<string> values) => novelModel.Tags = values.ToList();
-    private void HandleGenreSelectedValuesChanged(IEnumerable<string> values) => novelModel.Genres = values.ToList();
-
     public async Task HandleSubmit()
     {
         isProcessing = true;
 
         if (isModelCorrect())
         {
-            await CreateNovelAsync();
+            await UpdateNovelAsync();
         }
 
         isProcessing = false;
     }
 
-    public async Task CreateNovelAsync()
+    public async Task UpdateNovelAsync()
     {
         try
         {
             var id = await AuthStateProvider.GetUserIdAsync();
             novelModel.WriterAccountId = id!;
             novelModel.WriterName = await AuthStateProvider.GetAuthUsernameAsync();
-            var imageUrl = await NovelService.UploadCoverImageAsync(coverImage!);
-            novelModel.CoverImageUrl = imageUrl;
-            var result = await NovelService.CreateNovelAsync(novelModel);
+
+            if (coverImage is not null)
+            {
+                var imageUrl = await NovelService.UploadCoverImageAsync(coverImage!);
+                novelModel.CoverImageUrl = imageUrl;
+            }
+            
+            var result = await NovelService.UpdateNovelAsync(novelModel, NovelId);
 
             if (result)
             {
-                Snackbar.Add("¡Novela creada exitosamente! Ahora puedes compartir tu historia con todos los lectores.",
+                Snackbar.Add("¡Novela actualizada exitosamente! Ahora puedes compartir tu historia con todos los lectores.",
                 Severity.Success);
-                NavigationManager.NavigateTo("/");
+                NavigationManager.NavigateTo("/settings/publications");
             }
             else
             {
-                Snackbar.Add("No se pudo crear la novela. Por favor, intenta nuevamente más tarde.", Severity.Error);
+                Snackbar.Add("No se pudo actualizar la novela. Por favor, intenta nuevamente más tarde.", Severity.Error);
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine("Error al crear la novela: " + ex.Message);
-            Snackbar.Add("Lo sentimos, ocurrio un error con el servidor, por favor intentelo más tarde");
+            Snackbar.Add("Lo sentimos, ocurrio un error con el servidor, por favor intentelo más tarde", Severity.Error);
         }
 
     }
@@ -199,9 +256,8 @@
     private bool isModelCorrect()
     {
 
-        if (imagePreviewUrl is null)
-        {
-            Snackbar.Add("Debe seleccionar una imagen de portada");
+        if (!HasChanges()){
+            Snackbar.Add("Debe realizar algún cambio para poder actualizar la novela.");
             return false;
         }
 
@@ -212,5 +268,26 @@
         }
 
         return true;
+    }
+
+    private bool HasChanges()
+    {
+
+        if (!string.Equals(novelModel.Title, _originalModel.Title))
+            return true;
+
+        if (!string.Equals(novelModel.Description, _originalModel.Description))
+            return true; 
+
+        if (!Enumerable.SequenceEqual(novelModel.Tags.OrderBy(x => x), _originalModel.Tags.OrderBy(x => x)))
+            return true; 
+
+        if (!Enumerable.SequenceEqual(novelModel.Genres.OrderBy(x => x), _originalModel.Genres.OrderBy(x => x)))
+            return true; 
+
+        if (!string.Equals(imagePreviewUrl, _originalModel.CoverImageUrl))
+            return true; 
+
+        return false;
     }
 }

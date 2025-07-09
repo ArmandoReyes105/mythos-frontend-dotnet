@@ -7,13 +7,13 @@ public class NodeApiClient
 {
     public HttpClient Client { get; }
 
-    public NodeApiClient(AuthMessageHandler handler)
+    public NodeApiClient(AuthMessageHandler handler, IConfiguration configuration)
     {
         //handler.InnerHandler = new HttpClientHandler();
 
         Client = new HttpClient(handler)
         {
-            BaseAddress = new Uri("http://localhost:3001/api/")
+            BaseAddress = new Uri(configuration.GetValue<string>("NodeURL")!)
         };
     }
 }

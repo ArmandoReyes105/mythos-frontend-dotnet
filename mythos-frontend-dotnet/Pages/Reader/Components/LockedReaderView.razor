@@ -77,6 +77,7 @@
 
 @code {
     [Parameter] public ChapterModel Chapter { get; set; } = new();
+    [Parameter] public string WriterId { get; set; } = string.Empty;
 
     private bool _isProcessing = false;
 
@@ -86,7 +87,7 @@
 
         try
         {
-            var result = await ChapterService.PurchaseChapterAsync(Chapter.Id, Chapter.PriceMythras);
+            var result = await ChapterService.PurchaseChapterAsync(Chapter.Id, WriterId, Chapter.PriceMythras);
 
             if (result.Success)
             {
