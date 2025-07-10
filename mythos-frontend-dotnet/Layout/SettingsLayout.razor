@@ -13,24 +13,56 @@
     <MudMainContent>
         <MudDrawerContainer>
             <MudDrawer Open="true" Style="min-height: 100dvh;" ClipMode="DrawerClipMode.Always"
-                Breakpoint="Breakpoint.Md" Elevation="1" Variant="@DrawerVariant.Mini">
+                       Breakpoint="Breakpoint.Md" Elevation="1" Variant="@DrawerVariant.Mini">
                 <MudNavMenu Class="mt-5" Color="Color.Dark">
-                    <MudText Typo="Typo.subtitle1" Class="mb-2 font-weight-bold d-none d-md-block pl-4">AJUSTES
-                        GENERALES</MudText>
-                    <MudNavLink Href="/settings/account" Icon="@Icons.Material.Filled.Person">Mi cuenta</MudNavLink>
-                    <MudNavLink Href="/settings/mythras" Icon="@Icons.Material.Filled.AttachMoney">Mythras</MudNavLink>
+                    <MudText Typo="Typo.subtitle1" Class="mb-2 font-weight-bold d-none d-md-block pl-4">
+                        AJUSTES GENERALES
+                    </MudText>
 
-                    <AuthorizeView Roles="writer">
+                    
+                    <AuthorizeView Roles="admin">
                         <Authorized>
-                            <MudDivider Class="mt-5" />
-
-                            <MudText Typo="Typo.subtitle1" Class="mt-4 mb-2 font-weight-bold d-none d-md-block pl-4">
-                                AJUSTES ESCRITOR</MudText>
-                            <MudNavLink Href="/settings/publications" Icon="@Icons.Material.Filled.Book">Publicaciones
+                            <MudNavLink Href="/settings/account" Icon="@Icons.Material.Filled.Person">
+                                Mi cuenta
                             </MudNavLink>
-
-                            <MudNavLink Href="/settings/stats" Icon="@Icons.Material.Filled.QueryStats">Estadísticas
+                            <MudNavLink Href="/settings/admin-reports" Icon="@Icons.Material.Filled.Assessment">
+                                Reportes
                             </MudNavLink>
+                        </Authorized>
+                    </AuthorizeView>
+
+                    
+                    <AuthorizeView>
+                        <Authorized Context="auth">
+                            @if (!auth.User.IsInRole("admin"))
+                            {
+                                <MudNavLink Href="/settings/account" Icon="@Icons.Material.Filled.Person">
+                                    Mi cuenta
+                                </MudNavLink>
+
+                                <MudNavLink Href="/settings/mythras" Icon="@Icons.Material.Filled.AttachMoney">
+                                    Mythras
+                                </MudNavLink>
+                            }
+                        </Authorized>
+                    </AuthorizeView>
+
+                    
+                    <AuthorizeView Roles="writer">
+                        <Authorized Context="auth">
+                            @if (!auth.User.IsInRole("admin"))
+                            {
+                                <MudDivider Class="mt-5" />
+                                <MudText Typo="Typo.subtitle1" Class="mt-4 mb-2 font-weight-bold d-none d-md-block pl-4">
+                                    AJUSTES ESCRITOR
+                                </MudText>
+                                <MudNavLink Href="/settings/publications" Icon="@Icons.Material.Filled.Book">
+                                    Publicaciones
+                                </MudNavLink>
+                                <MudNavLink Href="/settings/stats" Icon="@Icons.Material.Filled.QueryStats">
+                                    Estadísticas
+                                </MudNavLink>
+                            }
                         </Authorized>
                     </AuthorizeView>
                 </MudNavMenu>

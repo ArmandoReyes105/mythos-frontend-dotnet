@@ -7,9 +7,10 @@ using mythos_frontend_dotnet.Services.Interfaces;
 
 namespace mythos_frontend_dotnet.Services.Implementations;
 
-public class NovelService(NodeApiClient nodeClient) : INovelService
+public class NovelService(NodeApiClient nodeClient, HttpClient dotnetClient) : INovelService
 {
     private HttpClient _nodeClient = nodeClient.Client;
+    private HttpClient _dotnetClient = dotnetClient;
 
     public async Task<bool> CreateNovelAsync(CreateNovelModel novel)
     {
@@ -84,4 +85,44 @@ public class NovelService(NodeApiClient nodeClient) : INovelService
         var response = await _nodeClient.DeleteAsync($"novels/{novelId}");
         return response.IsSuccessStatusCode;
     }
+
+    public async Task<List<NovelReportModel>?> GetAllNovelsReportsAsync(DateTime startDate, DateTime endDate)
+    {
+        try
+        {
+            // 1. Llamada al backend .NET para recuperar las estadísticas de capítulos comprados
+            var formattedStartDate = startDate.ToString("yyyy-MM-dd");
+            var formattedEndDate = endDate.ToString("yyyy-MM-dd");
+
+            var dotnetResponse = await _dotnetClient.GetAsync(
+                $"purchases/statistics-author?startDate={formattedStartDate}&endDate={formattedEndDate}");
+
+            if (!dotnetResponse.IsSuccessStatusCode)
+                return null;
+
+            var contentStats = await dotnetResponse.Content.ReadFromJsonAsync<List<ContentStatModel>>();
+
+            if (contentStats == null || contentStats.Count == 0)
+                return new List<NovelReportModel>(); // Lista vacía si no hay datos
+
+            // 2. Preparar el body para enviar al backend Node.js
+            var payload = new { contentStats };
+
+            // 3. Enviar los datos al endpoint del backend Node.js
+            var nodeResponse = await _nodeClient.PostAsJsonAsync("novels/chapters/stats/all", payload);
+
+            if (!nodeResponse.IsSuccessStatusCode)
+                return null;
+
+            var novelsReport = await nodeResponse.Content.ReadFromJsonAsync<List<NovelReportModel>>();
+
+            return novelsReport;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al recuperar los reportes de novelas: {ex.Message}");
+            return null;
+        }
+    }
+
 }

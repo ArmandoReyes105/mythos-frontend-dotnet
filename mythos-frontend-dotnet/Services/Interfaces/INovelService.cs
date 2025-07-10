@@ -13,4 +13,5 @@ public interface INovelService
     Task<List<NovelModel>?> GetNovelsByWriterAsync(string writerId);
     Task<bool> UpdateNovelAsync(CreateNovelModel novel, string novelId);
     Task<bool> DeleteNovelAsync(string novelId);
+    Task<List<NovelReportModel>?> GetAllNovelsReportsAsync(DateTime startDate, DateTime endDate);
 }

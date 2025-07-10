@@ -1,0 +1,173 @@
+@page "/settings/admin-reports"
+@attribute [Authorize(Roles = "admin")]
+
+@inject INovelService NovelService
+@using mythos_frontend_dotnet.Models
+
+<h3 class="title">📊 Reporte de Novelas</h3>
+
+<div class="filters">
+    <div class="field">
+        <label>Fecha de inicio</label>
+        <InputDate @bind-Value="startDate" class="input" />
+    </div>
+    <div class="field">
+        <label>Fecha de fin</label>
+        <InputDate @bind-Value="endDate" class="input" />
+    </div>
+    <div class="field">
+        <button @onclick="LoadReport" class="button">Obtener Reporte</button>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="loading">Cargando reporte...</div>
+}
+else if (novelsReport is not null && novelsReport.Count > 0)
+{
+    <div class="novel-grid">
+        @foreach (var novel in novelsReport)
+        {
+            <div class="card">
+                <img src="@novel.CoverImageUrl" alt="Portada" class="cover" />
+                <div class="content">
+                    <h4>@novel.Title</h4>
+                    <p><strong>Autor:</strong> @novel.WriterName</p>
+                    <p><strong>Total Mythras:</strong> @novel.TotalMythras</p>
+                    <details>
+                        <summary>Capítulos</summary>
+                        <ul>
+                            @foreach (var chapter in novel.Chapters)
+                            {
+                                <li>
+                                    <strong>@chapter.ChapterNumber. @chapter.Title</strong><br />
+                                    Precio: @chapter.PriceMythras |
+                                    Compras: @chapter.TotalPurchases |
+                                    Total: @chapter.TotalMythras
+                                </li>
+                            }
+                        </ul>
+                    </details>
+                </div>
+            </div>
+        }
+    </div>
+}
+else if (novelsReport is not null)
+{
+    <div class="message">No se encontraron datos en el rango seleccionado.</div>
+}
+
+<style>
+    .title {
+        margin-top: 1rem;
+        font-size: 1.8rem;
+        color: #333;
+    }
+
+    .filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .input {
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 1rem;
+    }
+
+    .button {
+        padding: 0.6rem 1rem;
+        background-color: #333;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-top: auto;
+    }
+
+    .button:hover {
+        background-color: #111;
+    }
+
+    .loading {
+        font-style: italic;
+        margin-top: 2rem;
+    }
+
+    .message {
+        margin-top: 2rem;
+        color: #666;
+    }
+
+    .novel-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .card {
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .cover {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+
+    .content {
+        padding: 1rem;
+    }
+
+    .content h4 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.2rem;
+        color: #222;
+    }
+
+    details summary {
+        cursor: pointer;
+        margin-top: 0.5rem;
+        color: #0077cc;
+    }
+
+    ul {
+        padding-left: 1rem;
+    }
+
+    li {
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+</style>
+
+@code {
+    private DateTime startDate = DateTime.Today.AddDays(-30);
+    private DateTime endDate = DateTime.Today;
+    private List<NovelReportModel>? novelsReport;
+    private bool isLoading = false;
+
+    private async Task LoadReport()
+    {
+        isLoading = true;
+        novelsReport = await NovelService.GetAllNovelsReportsAsync(startDate, endDate);
+        isLoading = false;
+    }
+}
